@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_constants.dart';
 import 'app_colors.dart';
 
 /// Centralized app theme (light and dark).
+/// Uses system font to avoid network font loading (works offline / in restricted environments).
 abstract final class AppTheme {
   AppTheme._();
+
+  static TextStyle _style({
+    required double fontSize,
+    required FontWeight fontWeight,
+    required Color color,
+  }) {
+    return TextStyle(
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+    );
+  }
 
   static ThemeData get light {
     return ThemeData(
@@ -21,14 +33,13 @@ abstract final class AppTheme {
         onError: Colors.white,
       ),
       scaffoldBackgroundColor: AppColors.backgroundLight,
-      fontFamily: GoogleFonts.lexend().fontFamily,
       textTheme: _textTheme(Colors.black87),
       appBarTheme: AppBarTheme(
         elevation: 0,
         centerTitle: true,
         backgroundColor: AppColors.backgroundLight,
         foregroundColor: Colors.black87,
-        titleTextStyle: GoogleFonts.lexend(
+        titleTextStyle: _style(
           fontSize: 18,
           fontWeight: FontWeight.w700,
           color: Colors.black87,
@@ -70,9 +81,10 @@ abstract final class AppTheme {
           ),
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.textOnPrimary,
-          textStyle: GoogleFonts.lexend(
+          textStyle: _style(
             fontSize: 16,
             fontWeight: FontWeight.w700,
+            color: AppColors.textOnPrimary,
           ),
         ),
       ),
@@ -97,14 +109,13 @@ abstract final class AppTheme {
         onError: Colors.white,
       ),
       scaffoldBackgroundColor: AppColors.backgroundDark,
-      fontFamily: GoogleFonts.lexend().fontFamily,
       textTheme: _textTheme(Colors.white),
       appBarTheme: AppBarTheme(
         elevation: 0,
         centerTitle: true,
         backgroundColor: AppColors.backgroundDark,
         foregroundColor: Colors.white,
-        titleTextStyle: GoogleFonts.lexend(
+        titleTextStyle: _style(
           fontSize: 18,
           fontWeight: FontWeight.w700,
           color: Colors.white,
@@ -147,9 +158,10 @@ abstract final class AppTheme {
           ),
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.textOnPrimary,
-          textStyle: GoogleFonts.lexend(
+          textStyle: _style(
             fontSize: 16,
             fontWeight: FontWeight.w700,
+            color: AppColors.textOnPrimary,
           ),
         ),
       ),
@@ -164,37 +176,37 @@ abstract final class AppTheme {
 
   static TextTheme _textTheme(Color defaultColor) {
     return TextTheme(
-      displayLarge: GoogleFonts.lexend(
+      displayLarge: _style(
         fontSize: 32,
         fontWeight: FontWeight.w700,
         color: defaultColor,
       ),
-      headlineMedium: GoogleFonts.lexend(
+      headlineMedium: _style(
         fontSize: 24,
         fontWeight: FontWeight.w700,
         color: defaultColor,
       ),
-      titleLarge: GoogleFonts.lexend(
+      titleLarge: _style(
         fontSize: 18,
         fontWeight: FontWeight.w700,
         color: defaultColor,
       ),
-      titleMedium: GoogleFonts.lexend(
+      titleMedium: _style(
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: defaultColor,
       ),
-      bodyLarge: GoogleFonts.lexend(
+      bodyLarge: _style(
         fontSize: 16,
         fontWeight: FontWeight.w400,
         color: defaultColor,
       ),
-      bodyMedium: GoogleFonts.lexend(
+      bodyMedium: _style(
         fontSize: 14,
         fontWeight: FontWeight.w400,
         color: defaultColor,
       ),
-      labelLarge: GoogleFonts.lexend(
+      labelLarge: _style(
         fontSize: 14,
         fontWeight: FontWeight.w600,
         color: defaultColor,
