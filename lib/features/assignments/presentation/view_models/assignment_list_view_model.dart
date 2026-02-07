@@ -2,13 +2,13 @@ import 'package:flutter/foundation.dart';
 
 import '../../../../core/utils/ui_state.dart';
 import '../../domain/models/assignment.dart';
-import '../../data/repositories/assignment_repository.dart';
+import '../../data/stores/assignment_store.dart';
 
 class AssignmentListViewModel extends ChangeNotifier {
-  AssignmentListViewModel({AssignmentRepository? repository})
-      : _repository = repository ?? MockAssignmentRepository();
+  AssignmentListViewModel({AssignmentStore? store})
+      : _store = store ?? MockAssignmentStore();
 
-  final AssignmentRepository _repository;
+  final AssignmentStore _store;
 
   UiState<List<Assignment>> _state = const UiLoading();
   String _filter = 'all';
@@ -28,7 +28,7 @@ class AssignmentListViewModel extends ChangeNotifier {
     _state = const UiLoading();
     notifyListeners();
     try {
-      final list = await _repository.getAssignments(
+      final list = await _store.getAssignments(
         filter: _filter == 'all' ? null : _filter,
       );
       _state = list.isEmpty ? const UiEmpty() : UiSuccess(list);
@@ -39,7 +39,7 @@ class AssignmentListViewModel extends ChangeNotifier {
   }
 
   Future<void> toggleComplete(String id) async {
-    await _repository.toggleComplete(id);
+    await _store.toggleComplete(id);
     load();
   }
 }
