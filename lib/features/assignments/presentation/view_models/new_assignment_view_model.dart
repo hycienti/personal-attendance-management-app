@@ -3,13 +3,13 @@ import 'package:flutter/foundation.dart';
 import '../../../../core/constants/validation_constants.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../domain/models/assignment.dart';
-import '../../data/repositories/assignment_repository.dart';
+import '../../data/stores/assignment_store.dart';
 
 class NewAssignmentViewModel extends ChangeNotifier {
-  NewAssignmentViewModel({AssignmentRepository? repository})
-      : _repository = repository ?? MockAssignmentRepository();
+  NewAssignmentViewModel({AssignmentStore? store})
+      : _store = store ?? MockAssignmentStore();
 
-  final AssignmentRepository _repository;
+  final AssignmentStore _store;
 
   String? _titleError;
   bool _isSaving = false;
@@ -48,7 +48,7 @@ class NewAssignmentViewModel extends ChangeNotifier {
     _saveError = null;
     notifyListeners();
     try {
-      await _repository.addAssignment(
+      await _store.addAssignment(
         Assignment(
           id: '',
           title: title.trim(),

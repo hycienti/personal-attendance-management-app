@@ -1,54 +1,19 @@
 import '../../../../core/logging/app_logger.dart';
 import '../../domain/models/assignment.dart';
 
-abstract class AssignmentRepository {
+abstract class AssignmentStore {
   Future<List<Assignment>> getAssignments({String? filter});
   Future<Assignment> addAssignment(Assignment assignment);
   Future<void> toggleComplete(String id);
 }
 
-class MockAssignmentRepository implements AssignmentRepository {
-  final List<Assignment> _items = [
-    Assignment(
-      id: '1',
-      title: 'Leadership Core Project',
-      courseName: 'Leading for Impact • LFI 101',
-      dueDate: DateTime.now(),
-      dueTime: '11:59 PM',
-      priority: AssignmentPriority.high,
-      isCompleted: false,
-    ),
-    Assignment(
-      id: '2',
-      title: 'Data Science Quiz',
-      courseName: 'Intro to Data • DAT 202',
-      dueDate: DateTime.now(),
-      dueTime: '4:00 PM',
-      priority: AssignmentPriority.medium,
-      isCompleted: false,
-    ),
-    Assignment(
-      id: '3',
-      title: 'Entrepreneurship Pitch',
-      courseName: 'Entrepreneurial Leadership • ENT 301',
-      dueDate: DateTime.now().add(const Duration(days: 2)),
-      priority: AssignmentPriority.low,
-      isCompleted: false,
-    ),
-    Assignment(
-      id: '4',
-      title: 'Reading Assignment',
-      courseName: 'Global Challenges • GC 100',
-      dueDate: DateTime.now().subtract(const Duration(days: 1)),
-      priority: AssignmentPriority.medium,
-      isCompleted: true,
-    ),
-  ];
+class MockAssignmentStore implements AssignmentStore {
+  final List<Assignment> _items = [];
 
   @override
   Future<List<Assignment>> getAssignments({String? filter}) async {
     await Future.delayed(const Duration(milliseconds: 400));
-    AppLogger.d('AssignmentRepository.getAssignments filter=$filter');
+    AppLogger.d('AssignmentStore.getAssignments filter=$filter');
     if (filter == 'done') {
       return _items.where((e) => e.isCompleted).toList();
     }

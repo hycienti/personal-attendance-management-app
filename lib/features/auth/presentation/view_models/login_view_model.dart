@@ -43,7 +43,7 @@ class LoginViewModel extends ChangeNotifier {
     _submitError = null;
     notifyListeners();
     try {
-      // TODO: Replace with real API call
+      // Replace with real API when ready
       await Future.delayed(const Duration(milliseconds: 800));
       AppLogger.i('Login attempted for $email (mocked success)');
       return true;

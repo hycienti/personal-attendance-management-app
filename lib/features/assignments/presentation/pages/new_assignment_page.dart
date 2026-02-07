@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/alu_button.dart';
 import '../../../../shared/widgets/alu_text_field.dart';
 import '../../../../shared/widgets/responsive_container.dart';
+import '../../data/stores/assignment_store.dart';
 import '../../domain/models/assignment.dart';
 import '../view_models/new_assignment_view_model.dart';
 
@@ -52,7 +53,9 @@ class _NewAssignmentPageState extends State<NewAssignmentPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return ChangeNotifierProvider(
-      create: (_) => NewAssignmentViewModel(),
+      create: (_) => NewAssignmentViewModel(
+        store: context.read<AssignmentStore>(),
+      ),
       child: Scaffold(
         appBar: AppBar(
           leading: TextButton(

@@ -7,18 +7,21 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/alu_card.dart';
 import '../../../../shared/widgets/loading_view.dart';
 import '../../../../shared/widgets/responsive_container.dart';
-import '../../data/repositories/attendance_repository.dart';
+import '../../data/stores/attendance_store.dart';
 import '../../domain/models/attendance_record.dart';
 
 class AttendanceHistoryPage extends StatefulWidget {
-  const AttendanceHistoryPage({super.key});
+  AttendanceHistoryPage({super.key, AttendanceStore? store})
+      : _store = store ?? MockAttendanceStore();
+
+  final AttendanceStore _store;
 
   @override
   State<AttendanceHistoryPage> createState() => _AttendanceHistoryPageState();
 }
 
 class _AttendanceHistoryPageState extends State<AttendanceHistoryPage> {
-  final _repository = MockAttendanceRepository();
+  AttendanceStore get _store => widget._store;
   double _overallPercent = 0;
   int _totalAttended = 0;
   int _totalHeld = 0;
@@ -35,10 +38,10 @@ class _AttendanceHistoryPageState extends State<AttendanceHistoryPage> {
     setState(() => _loading = true);
     try {
       final results = await Future.wait([
-        _repository.getOverallPercent(),
-        _repository.getTotalAttended(),
-        _repository.getTotalHeld(),
-        _repository.getRecentActivity(),
+        _store.getOverallPercent(),
+        _store.getTotalAttended(),
+        _store.getTotalHeld(),
+        _store.getRecentActivity(),
       ]);
       setState(() {
         _overallPercent = results[0] as double;

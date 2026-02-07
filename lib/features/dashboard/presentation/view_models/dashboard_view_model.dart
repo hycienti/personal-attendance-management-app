@@ -3,14 +3,13 @@ import 'package:flutter/foundation.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../../core/utils/ui_state.dart';
 import '../../domain/models/dashboard_models.dart';
-import '../../data/repositories/dashboard_repository.dart';
+import '../../data/stores/dashboard_store.dart';
 
-/// ViewModel for dashboard. Manages loading, success, empty, error states.
 class DashboardViewModel extends ChangeNotifier {
-  DashboardViewModel({DashboardRepository? repository})
-      : _repository = repository ?? MockDashboardRepository();
+  DashboardViewModel({DashboardStore? store})
+      : _store = store ?? MockDashboardStore();
 
-  final DashboardRepository _repository;
+  final DashboardStore _store;
 
   UiState<DashboardStats> _statsState = const UiLoading();
   UiState<List<TodaySession>> _sessionsState = const UiLoading();
@@ -28,9 +27,9 @@ class DashboardViewModel extends ChangeNotifier {
 
     try {
       final results = await Future.wait([
-        _repository.getStats(),
-        _repository.getTodaySessions(),
-        _repository.getUpcomingAssignments(),
+        _store.getStats(),
+        _store.getTodaySessions(),
+        _store.getUpcomingAssignments(),
       ]);
       _statsState = UiSuccess(results[0] as DashboardStats);
       final sessions = results[1] as List<TodaySession>;

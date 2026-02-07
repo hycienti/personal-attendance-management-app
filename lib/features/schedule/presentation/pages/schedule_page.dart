@@ -6,7 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/alu_card.dart';
 import '../../../../shared/widgets/loading_view.dart';
 import '../../../../shared/widgets/responsive_container.dart';
-import '../../data/repositories/schedule_repository.dart';
+import '../../data/stores/schedule_store.dart';
 import '../../domain/models/schedule_session.dart';
 
 class SchedulePage extends StatefulWidget {
@@ -21,7 +21,7 @@ class _SchedulePageState extends State<SchedulePage> {
   List<ScheduleSession> _sessions = [];
   bool _loading = true;
   double _weekAttendance = 0;
-  final _repository = MockScheduleRepository();
+  final _store = MockScheduleStore();
 
   @override
   void initState() {
@@ -32,11 +32,11 @@ class _SchedulePageState extends State<SchedulePage> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      final sessions = await _repository.getSessionsForDay(_selectedDay);
+      final sessions = await _store.getSessionsForDay(_selectedDay);
       final weekStart = _selectedDay.subtract(
         Duration(days: _selectedDay.weekday - 1),
       );
-      final percent = await _repository.getAttendancePercentForWeek(weekStart);
+      final percent = await _store.getAttendancePercentForWeek(weekStart);
       setState(() {
         _sessions = sessions;
         _weekAttendance = percent;

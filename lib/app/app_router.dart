@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/route_constants.dart';
+import '../features/assignments/data/stores/assignment_store.dart';
+import '../features/attendance/data/stores/attendance_store.dart';
 import '../features/attendance/presentation/pages/attendance_history_page.dart';
 import '../features/auth/presentation/pages/create_account_page.dart';
 import '../features/auth/presentation/pages/login_page.dart';
@@ -52,9 +54,11 @@ GoRouter createAppRouter() {
           ),
           GoRoute(
             path: RouteConstants.assignments,
-            pageBuilder: (_, state) => NoTransitionPage(
+            pageBuilder: (context, state) => NoTransitionPage(
               child: ChangeNotifierProvider(
-                create: (_) => AssignmentListViewModel()..load(),
+                create: (_) => AssignmentListViewModel(
+                  store: context.read<AssignmentStore>(),
+                )..load(),
                 child: const AssignmentListPage(),
               ),
             ),
@@ -81,8 +85,10 @@ GoRouter createAppRouter() {
           ),
           GoRoute(
             path: RouteConstants.attendanceHistory,
-            pageBuilder: (_, state) => const NoTransitionPage(
-              child: AttendanceHistoryPage(),
+            pageBuilder: (context, state) => NoTransitionPage(
+              child: AttendanceHistoryPage(
+                store: context.read<AttendanceStore>(),
+              ),
             ),
           ),
           GoRoute(
