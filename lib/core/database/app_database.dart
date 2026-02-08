@@ -14,9 +14,10 @@ class AppDatabase {
   static Database? _db;
 
   static const String _dbName = 'attendance_app.db';
-  static const int _version = 1;
+  static const int _version = 2;
 
-  // our formative Tables
+  // Tables
+  static const String tableUsers = 'users';
   static const String tableAssignments = 'assignments';
   static const String tableAttendanceRecords = 'attendance_records';
 
@@ -30,12 +31,14 @@ class AppDatabase {
       path,
       version: _version,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
     _instance = AppDatabase._();
     return _instance!;
   }
 
   static Future<void> _onCreate(Database db, int version) async {
+    await _createUsersTable(db);
     await db.execute('''
       CREATE TABLE $tableAssignments (
         id TEXT PRIMARY KEY,
@@ -61,6 +64,30 @@ class AppDatabase {
       )
     ''');
     AppLogger.d('SQLite tables created');
+  }
+
+  static Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await _createUsersTable(db);
+      AppLogger.d('SQLite: users table added in migration');
+    }
+  }
+
+  static Future<void> _createUsersTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableUsers (
+        id TEXT PRIMARY KEY,
+        email TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        salt TEXT NOT NULL,
+        full_name TEXT NOT NULL,
+        student_id TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    ''');
+    await db.execute(
+      'CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON $tableUsers (email)',
+    );
   }
 
   static AppDatabase? get instance => _instance;
@@ -168,6 +195,35 @@ class AppDatabase {
     row['id'] = id;
     row['created_at'] = DateTime.now().toIso8601String();
     await _db!.insert(tableAttendanceRecords, row);
+    return row;
+  }
+
+  // --- Users (auth) ---
+
+  Future<Map<String, dynamic>?> getUserByEmail(String email) async {
+    final rows = await _db!.query(
+      tableUsers,
+      where: 'email = ?',
+      whereArgs: [email.trim().toLowerCase()],
+    );
+    return rows.isEmpty ? null : rows.first;
+  }
+
+  Future<Map<String, dynamic>?> getUserById(String id) async {
+    final rows = await _db!.query(
+      tableUsers,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    return rows.isEmpty ? null : rows.first;
+  }
+
+  Future<Map<String, dynamic>> insertUser(Map<String, dynamic> row) async {
+    final id = DateTime.now().millisecondsSinceEpoch.toString();
+    row['id'] = id;
+    row['email'] = (row['email'] as String).trim().toLowerCase();
+    row['created_at'] = DateTime.now().toIso8601String();
+    await _db!.insert(tableUsers, row);
     return row;
   }
 }

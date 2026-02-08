@@ -54,9 +54,9 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
     return ChangeNotifierProvider(
       create: (_) => CreateAccountViewModel(),
       child: Scaffold(
-        backgroundColor: AppColors.backgroundDark,
+        backgroundColor: AppColors.aluNavy,
         appBar: AppBar(
-          backgroundColor: AppColors.backgroundDark,
+          backgroundColor: AppColors.aluNavy,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_rounded),
             onPressed: () => context.pop(),
