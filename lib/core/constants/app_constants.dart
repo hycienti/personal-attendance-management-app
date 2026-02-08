@@ -31,4 +31,7 @@ abstract final class AppConstants {
   static const String dateFormatShort = 'MMM d, y';
   static const String dateFormatDisplay = 'EEEE, MMM d';
   static const String timeDisplayFormat = 'h:mm a';
+
+  static const double buttonBorderRadius = 12;
+  static const double inputBorderRadius = 12;
 }
