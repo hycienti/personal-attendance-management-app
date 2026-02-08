@@ -47,6 +47,7 @@ class _LoginPageState extends State<LoginPage> {
     return ChangeNotifierProvider(
       create: (_) => LoginViewModel(),
       child: Scaffold(
+        backgroundColor: AppColors.aluNavy,
         body: SafeArea(
           child: ResponsiveContainer(
             child: SingleChildScrollView(

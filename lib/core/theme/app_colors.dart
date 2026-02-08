@@ -12,7 +12,7 @@ abstract final class AppColors {
   // Navy / Background
   static const Color aluNavy = Color(0xFF1A2332);
   static const Color backgroundLight = Color(0xFFF6F6F8);
-  static const Color backgroundDark = Color(0xff0f172a);
+  static const Color backgroundDark = Color(0xff0d1117);
   static const Color surfaceDark = Color(0xFF162033);
   static const Color cardDark = Color(0xFF1E293B);
 
