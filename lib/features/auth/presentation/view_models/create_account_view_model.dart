@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/logging/app_logger.dart';
+import '../../data/models/user.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../domain/validators/auth_validators.dart';
 
@@ -72,7 +73,8 @@ class CreateAccountViewModel extends ChangeNotifier {
     return valid;
   }
 
-  Future<bool> submit({
+  /// Returns the created user on success, null otherwise.
+  Future<User?> submit({
     required String fullName,
     required String studentId,
     required String email,
@@ -85,7 +87,7 @@ class CreateAccountViewModel extends ChangeNotifier {
       password: password,
       confirmPassword: password,
     )) {
-      return false;
+      return null;
     }
     _isLoading = true;
     _submitError = null;
@@ -100,14 +102,14 @@ class CreateAccountViewModel extends ChangeNotifier {
       );
       if (user == null) {
         _submitError = 'An account with this email already exists.';
-        return false;
+        return null;
       }
       AppLogger.i('Create account success: ${user.email}');
-      return true;
+      return user;
     } catch (e, st) {
       AppLogger.e('Create account failed', e, st);
       _submitError = 'Registration failed. Please try again.';
-      return false;
+      return null;
     } finally {
       _isLoading = false;
       notifyListeners();

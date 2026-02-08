@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/route_constants.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/presentation/state/auth_session.dart';
 import '../../../../shared/widgets/alu_card.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/error_view.dart';
@@ -22,6 +23,14 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthSession>().ensureUserLoaded();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -46,41 +55,46 @@ class _DashboardPageState extends State<DashboardPage> {
                 children: [
                   const SizedBox(height: 8),
                   // Header
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundColor: AppColors.primary.withValues(alpha: 0.2),
-                        child: const Icon(
-                          Icons.person_rounded,
-                          color: AppColors.primary,
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '$greeting, Kwame',
-                              style: theme.textTheme.titleLarge,
+                  Consumer<AuthSession>(
+                    builder: (context, session, _) {
+                      final name = session.currentUser?.fullName ?? 'User';
+                      return Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 24,
+                            backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+                            child: const Icon(
+                              Icons.person_rounded,
+                              color: AppColors.primary,
+                              size: 28,
                             ),
-                            Text(
-                              '$dateStr | Week ${_weekOfYear(now)}',
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurface
-                                        .withValues(alpha: 0.6),
-                                  ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '$greeting, $name',
+                                  style: theme.textTheme.titleLarge,
+                                ),
+                                Text(
+                                  '$dateStr | Week ${_weekOfYear(now)}',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                        color: theme.colorScheme.onSurface
+                                            .withValues(alpha: 0.6),
+                                      ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.notifications_rounded),
-                        onPressed: () {},
-                      ),
-                    ],
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.notifications_rounded),
+                            onPressed: () {},
+                          ),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
                   // Stats cards

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/logging/app_logger.dart';
+import '../../data/models/user.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../domain/validators/auth_validators.dart';
 
@@ -42,8 +43,9 @@ class LoginViewModel extends ChangeNotifier {
     return valid;
   }
 
-  Future<bool> submit(String email, String password) async {
-    if (!validate(email, password)) return false;
+  /// Returns the logged-in user on success, null otherwise.
+  Future<User?> submit(String email, String password) async {
+    if (!validate(email, password)) return null;
     _isLoading = true;
     _submitError = null;
     notifyListeners();
@@ -52,14 +54,14 @@ class LoginViewModel extends ChangeNotifier {
       final user = await repo.login(email, password);
       if (user == null) {
         _submitError = 'Invalid email or password.';
-        return false;
+        return null;
       }
       AppLogger.i('Login success: ${user.email}');
-      return true;
+      return user;
     } catch (e, st) {
       AppLogger.e('Login failed', e, st);
       _submitError = 'Login failed. Please try again.';
-      return false;
+      return null;
     } finally {
       _isLoading = false;
       notifyListeners();

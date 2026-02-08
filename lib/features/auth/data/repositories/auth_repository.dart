@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart';
+
 import '../../../../core/database/app_database.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../../core/auth/password_hasher.dart';
@@ -6,7 +8,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 const String _keyCurrentUserId = 'current_user_id';
 
-/// Handles login, create account, logout, and current user via SQLite + SharedPreferences.
+/// Handles login, create account, logout, and current user. Session is persisted in the DB
+/// (primary). SharedPreferences and in-memory are used as fallback when DB is unavailable
+/// or when migrating from prefs-only to DB.
 class AuthRepository {
   AuthRepository({
     SharedPreferences? prefs,
@@ -14,22 +18,90 @@ class AuthRepository {
 
   SharedPreferences? _prefs;
   static SharedPreferences? _staticPrefs;
+  static String? _memoryCurrentUserId;
 
   static Future<AuthRepository> create() async {
-    _staticPrefs ??= await SharedPreferences.getInstance();
+    if (_staticPrefs == null) {
+      try {
+        _staticPrefs = await SharedPreferences.getInstance();
+      } on PlatformException catch (e) {
+        AppLogger.w('AuthRepository: SharedPreferences unavailable: $e');
+        _staticPrefs = null;
+      } catch (e) {
+        AppLogger.w('AuthRepository: SharedPreferences failed: $e');
+        _staticPrefs = null;
+      }
+    }
     return AuthRepository(prefs: _staticPrefs);
   }
 
-  Future<SharedPreferences> get _prefsAsync async {
-    _prefs ??= await SharedPreferences.getInstance();
-    return _prefs!;
+  /// Read current user id: DB first, then prefs, then in-memory. If we get id from prefs/memory
+  /// and DB is available, write it to DB so session is persisted there.
+  Future<String?> _getStoredUserId() async {
+    final db = AppDatabase.instance;
+    if (db != null) {
+      try {
+        final id = await db.getSessionUserId();
+        if (id != null && id.isNotEmpty) return id;
+      } catch (e) {
+        AppLogger.w('AuthRepository: DB session read failed: $e');
+      }
+    }
+    String? id;
+    if (_prefs != null) {
+      id = _prefs!.getString(_keyCurrentUserId);
+    } else {
+      try {
+        _prefs ??= await SharedPreferences.getInstance();
+        id = _prefs!.getString(_keyCurrentUserId);
+      } on PlatformException catch (_) {
+        id = _memoryCurrentUserId;
+      } catch (_) {
+        id = _memoryCurrentUserId;
+      }
+    }
+    if (id != null && db != null) {
+      try {
+        await db.setSessionUserId(id);
+      } catch (_) {}
+    }
+    return id;
+  }
+
+  /// Persist current user id: DB first, then prefs, then in-memory fallback.
+  Future<void> _setStoredUserId(String? id) async {
+    final db = AppDatabase.instance;
+    if (db != null) {
+      try {
+        await db.setSessionUserId(id);
+      } catch (e) {
+        AppLogger.w('AuthRepository: DB session write failed: $e');
+      }
+    }
+    if (_prefs != null) {
+      if (id != null) {
+        await _prefs!.setString(_keyCurrentUserId, id);
+      } else {
+        await _prefs!.remove(_keyCurrentUserId);
+      }
+      return;
+    }
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      if (id != null) {
+        await _prefs!.setString(_keyCurrentUserId, id);
+      } else {
+        await _prefs!.remove(_keyCurrentUserId);
+      }
+    } on PlatformException catch (_) {
+      _memoryCurrentUserId = id;
+    } catch (_) {
+      _memoryCurrentUserId = id;
+    }
   }
 
   /// Returns current logged-in user id or null.
-  Future<String?> get currentUserId async {
-    final p = await _prefsAsync;
-    return p.getString(_keyCurrentUserId);
-  }
+  Future<String?> get currentUserId async => _getStoredUserId();
 
   /// Returns current user if logged in, else null.
   Future<User?> getCurrentUser() async {
@@ -54,8 +126,7 @@ class AuthRepository {
     final storedHash = row['password_hash'] as String? ?? '';
     if (!PasswordHasher.verify(password, salt, storedHash)) return null;
     final user = User.fromMap(row);
-    final p = await _prefsAsync;
-    await p.setString(_keyCurrentUserId, user.id);
+    await _setStoredUserId(user.id);
     AppLogger.i('AuthRepository: user logged in ${user.email}');
     return user;
   }
@@ -84,16 +155,14 @@ class AuthRepository {
       'student_id': studentId.trim(),
     });
     final user = User.fromMap(row);
-    final p = await _prefsAsync;
-    await p.setString(_keyCurrentUserId, user.id);
+    await _setStoredUserId(user.id);
     AppLogger.i('AuthRepository: account created ${user.email}');
     return user;
   }
 
   /// Logout: clear session only (user remains in DB).
   Future<void> logout() async {
-    final p = await _prefsAsync;
-    await p.remove(_keyCurrentUserId);
+    await _setStoredUserId(null);
     AppLogger.i('AuthRepository: user logged out');
   }
 
