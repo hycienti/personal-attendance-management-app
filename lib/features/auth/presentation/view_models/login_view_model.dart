@@ -1,10 +1,15 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/logging/app_logger.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../../domain/validators/auth_validators.dart';
 
-/// ViewModel for login screen. Handles validation and submit; ready for API.
+/// ViewModel for login screen. Validates and authenticates via AuthRepository (SQLite).
 class LoginViewModel extends ChangeNotifier {
+  LoginViewModel({AuthRepository? authRepository})
+      : _authRepository = authRepository;
+
+  AuthRepository? _authRepository;
   String? _emailError;
   String? _passwordError;
   bool _obscurePassword = true;
@@ -43,9 +48,13 @@ class LoginViewModel extends ChangeNotifier {
     _submitError = null;
     notifyListeners();
     try {
-      // Replace with real API when ready
-      await Future.delayed(const Duration(milliseconds: 800));
-      AppLogger.i('Login attempted for $email (mocked success)');
+      final repo = _authRepository ?? await AuthRepository.create();
+      final user = await repo.login(email, password);
+      if (user == null) {
+        _submitError = 'Invalid email or password.';
+        return false;
+      }
+      AppLogger.i('Login success: ${user.email}');
       return true;
     } catch (e, st) {
       AppLogger.e('Login failed', e, st);

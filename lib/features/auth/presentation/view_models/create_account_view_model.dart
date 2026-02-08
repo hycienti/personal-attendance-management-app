@@ -1,10 +1,15 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/logging/app_logger.dart';
+import '../../data/repositories/auth_repository.dart';
 import '../../domain/validators/auth_validators.dart';
 
-/// ViewModel for create account screen.
+/// ViewModel for create account screen. Persists user to SQLite via AuthRepository.
 class CreateAccountViewModel extends ChangeNotifier {
+  CreateAccountViewModel({AuthRepository? authRepository})
+      : _authRepository = authRepository;
+
+  AuthRepository? _authRepository;
   String? _fullNameError;
   String? _studentIdError;
   String? _emailError;
@@ -86,8 +91,18 @@ class CreateAccountViewModel extends ChangeNotifier {
     _submitError = null;
     notifyListeners();
     try {
-      await Future.delayed(const Duration(milliseconds: 800));
-      AppLogger.i('Create account attempted for $email (mocked success)');
+      final repo = _authRepository ?? await AuthRepository.create();
+      final user = await repo.createAccount(
+        fullName: fullName,
+        studentId: studentId,
+        email: email,
+        password: password,
+      );
+      if (user == null) {
+        _submitError = 'An account with this email already exists.';
+        return false;
+      }
+      AppLogger.i('Create account success: ${user.email}');
       return true;
     } catch (e, st) {
       AppLogger.e('Create account failed', e, st);
