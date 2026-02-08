@@ -14,10 +14,11 @@ class AppDatabase {
   static Database? _db;
 
   static const String _dbName = 'attendance_app.db';
-  static const int _version = 2;
+  static const int _version = 3;
 
   // Tables
   static const String tableUsers = 'users';
+  static const String tableSession = 'session';
   static const String tableAssignments = 'assignments';
   static const String tableAttendanceRecords = 'attendance_records';
 
@@ -39,6 +40,7 @@ class AppDatabase {
 
   static Future<void> _onCreate(Database db, int version) async {
     await _createUsersTable(db);
+    await _createSessionTable(db);
     await db.execute('''
       CREATE TABLE $tableAssignments (
         id TEXT PRIMARY KEY,
@@ -71,6 +73,22 @@ class AppDatabase {
       await _createUsersTable(db);
       AppLogger.d('SQLite: users table added in migration');
     }
+    if (oldVersion < 3) {
+      await _createSessionTable(db);
+      AppLogger.d('SQLite: session table added in migration');
+    }
+  }
+
+  static Future<void> _createSessionTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableSession (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        user_id TEXT
+      )
+    ''');
+    await db.rawInsert(
+      'INSERT OR IGNORE INTO $tableSession (id, user_id) VALUES (1, NULL)',
+    );
   }
 
   static Future<void> _createUsersTable(Database db) async {
@@ -225,5 +243,27 @@ class AppDatabase {
     row['created_at'] = DateTime.now().toIso8601String();
     await _db!.insert(tableUsers, row);
     return row;
+  }
+
+  // --- Session (current user id persisted in DB) ---
+
+  Future<String?> getSessionUserId() async {
+    final rows = await _db!.query(
+      tableSession,
+      columns: ['user_id'],
+      where: 'id = ?',
+      whereArgs: [1],
+    );
+    if (rows.isEmpty) return null;
+    final v = rows.first['user_id'];
+    return v is String ? v : null;
+  }
+
+  Future<void> setSessionUserId(String? userId) async {
+    // Use INSERT OR REPLACE so the session row always exists and is updated
+    await _db!.rawInsert(
+      'INSERT OR REPLACE INTO $tableSession (id, user_id) VALUES (1, ?)',
+      [userId],
+    );
   }
 }

@@ -6,7 +6,7 @@ import '../core/constants/route_constants.dart';
 import '../features/assignments/data/stores/assignment_store.dart';
 import '../features/attendance/data/stores/attendance_store.dart';
 import '../features/attendance/presentation/pages/attendance_history_page.dart';
-import '../features/auth/data/repositories/auth_repository.dart';
+import '../features/auth/presentation/state/auth_session.dart';
 import '../features/auth/presentation/pages/create_account_page.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/assignments/presentation/pages/assignment_list_page.dart';
@@ -23,14 +23,14 @@ import 'app_shell.dart';
 final GlobalKey<NavigatorState> _rootNavKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _shellNavKey = GlobalKey<NavigatorState>();
 
-GoRouter createAppRouter() {
+GoRouter createAppRouter(AuthSession authSession) {
   return GoRouter(
     navigatorKey: _rootNavKey,
     initialLocation: RouteConstants.dashboard,
     debugLogDiagnostics: true,
-    redirect: (BuildContext context, GoRouterState state) async {
-      final repo = await AuthRepository.create();
-      final loggedIn = await repo.isLoggedIn;
+    refreshListenable: authSession,
+    redirect: (BuildContext context, GoRouterState state) {
+      final loggedIn = authSession.isLoggedIn;
       final isAuthRoute = state.matchedLocation == RouteConstants.login ||
           state.matchedLocation == RouteConstants.createAccount;
       if (!loggedIn && !isAuthRoute) return RouteConstants.login;

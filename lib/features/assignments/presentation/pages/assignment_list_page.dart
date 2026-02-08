@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/constants/route_constants.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../auth/presentation/state/auth_session.dart';
 import '../../../../shared/widgets/alu_card.dart';
 import '../../../../shared/widgets/empty_view.dart';
 import '../../../../shared/widgets/error_view.dart';
@@ -20,6 +21,14 @@ class AssignmentListPage extends StatefulWidget {
 }
 
 class _AssignmentListPageState extends State<AssignmentListPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<AuthSession>().ensureUserLoaded();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -102,33 +111,42 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: AppColors.primary.withValues(alpha: 0.2),
-          child: const Icon(Icons.person_rounded, color: AppColors.primary),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Hello, Sarah', style: theme.textTheme.titleLarge),
-              Text(
-                "Computing Class of '25",
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
+    return Consumer<AuthSession>(
+      builder: (context, session, _) {
+        final name = session.currentUser?.fullName ?? 'User';
+        final subtitle = session.currentUser?.studentId != null
+            ? 'Student ID: ${session.currentUser!.studentId}'
+            : '';
+        return Row(
+          children: [
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+              child: const Icon(Icons.person_rounded, color: AppColors.primary),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Hello, $name', style: theme.textTheme.titleLarge),
+                  if (subtitle.isNotEmpty)
+                    Text(
+                      subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                ],
               ),
-            ],
-          ),
-        ),
-        IconButton(
-          icon: const Icon(Icons.notifications_rounded),
-          onPressed: () {},
-        ),
-      ],
+            ),
+            IconButton(
+              icon: const Icon(Icons.notifications_rounded),
+              onPressed: () {},
+            ),
+          ],
+        );
+      },
     );
   }
 }

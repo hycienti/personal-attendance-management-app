@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/route_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/validators/auth_validators.dart';
+import '../../presentation/state/auth_session.dart';
 import '../../../../shared/widgets/alu_button.dart';
 import '../../../../shared/widgets/alu_text_field.dart';
 import '../../../../shared/widgets/responsive_container.dart';
@@ -37,15 +38,21 @@ class _CreateAccountPageState extends State<CreateAccountPage> {
 
   Future<void> _submit(CreateAccountViewModel vm) async {
     vm.clearErrors();
-    final success = await vm.submit(
+    final user = await vm.submit(
       fullName: _fullNameController.text.trim(),
       studentId: _studentIdController.text.trim(),
       email: _emailController.text.trim(),
       password: _passwordController.text,
     );
     if (!mounted) return;
-    if (success) {
-      context.go(RouteConstants.dashboard);
+    if (user != null) {
+      final session = context.read<AuthSession>();
+      session.setUser(user);
+      // Defer navigation so the session update is committed before the new route builds.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) return;
+        context.go(RouteConstants.dashboard);
+      });
     }
   }
 
