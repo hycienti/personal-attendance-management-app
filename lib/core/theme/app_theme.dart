@@ -55,17 +55,19 @@ abstract final class AppTheme {
           horizontal: 16,
           vertical: 16,
         ),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppConstants.inputBorderRadius),
+        ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppConstants.inputBorderRadius),
           borderSide: BorderSide(color: Colors.grey.shade300),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppConstants.inputBorderRadius),
           borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppConstants.inputBorderRadius),
           borderSide: const BorderSide(color: AppColors.error),
         ),
         hintStyle: TextStyle(color: Colors.grey.shade500),
@@ -74,7 +76,9 @@ abstract final class AppTheme {
         style: ElevatedButton.styleFrom(
           minimumSize: const Size.fromHeight(AppConstants.buttonHeight),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(
+              AppConstants.buttonBorderRadius,
+            ),
           ),
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.textOnPrimary,
@@ -128,7 +132,7 @@ abstract final class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFF1E293B),
+        fillColor: AppColors.aluNavyInput,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
