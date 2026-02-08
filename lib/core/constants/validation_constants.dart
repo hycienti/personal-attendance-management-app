@@ -18,14 +18,14 @@ abstract final class ValidationConstants {
   // Patterns (for RegExp)
   static const String emailPattern =
       r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$';
-  static const String aluEmailSuffix = '@alueducation.com';
+  static const String aluEmailSuffix = '@alustudent.com';
   static final RegExp emailRegex = RegExp(emailPattern);
 
   // Messages
   static const String requiredField = 'This field is required';
   static const String invalidEmail = 'Please enter a valid email address';
   static const String aluEmailRequired =
-      'Please use your ALU student email (@alueducation.com)';
+      'Please use your ALU student email (@alustudent.com)';
   static const String passwordTooShort =
       'Password must be at least $minPasswordLength characters';
   static const String passwordMismatch = 'Passwords do not match';

@@ -96,7 +96,7 @@ class _LoginPageState extends State<LoginPage> {
                         AluTextField(
                           controller: _emailController,
                           label: 'ALU Student Email',
-                          hint: 'student.name@alueducation.com',
+                          hint: 'student.name@alustudent.com',
                           keyboardType: TextInputType.emailAddress,
                           autofillHints: const [AutofillHints.email],
                           errorText: vm.emailError,
