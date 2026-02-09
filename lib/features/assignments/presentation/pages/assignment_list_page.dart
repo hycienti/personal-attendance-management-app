@@ -47,6 +47,10 @@ class _AssignmentListPageState extends State<AssignmentListPage> {
                             context.push(RouteConstants.schedule),
                       ),
                       const SizedBox(height: 16),
+                      const _WeeklyProgressCard(),
+                      const SizedBox(height: 16),
+                      const _TaskSummaryCards(),
+                      const SizedBox(height: 16),
                       const _FilterChips(),
                       const SizedBox(height: 16),
                     ],
@@ -73,7 +77,11 @@ class _AssignmentListPageState extends State<AssignmentListPage> {
                                   assignment: list[i],
                                   onToggle: () =>
                                       vm.toggleComplete(list[i].id),
-                                  onTap: () {},
+                                  onTap: () => context.push(
+                                    '${RouteConstants.assignments}/${list[i].id}/edit',
+                                    extra: list[i],
+                                  ),
+                                  onDelete: () => vm.deleteAssignment(list[i].id),
                                 ),
                               ),
                             ),
@@ -151,6 +159,198 @@ class _Header extends StatelessWidget {
   }
 }
 
+class _WeeklyProgressCard extends StatelessWidget {
+  const _WeeklyProgressCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AssignmentListViewModel>(
+      builder: (context, vm, _) {
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.priorityHigh,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Weekly Progress',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${vm.weeklyCompletionRate}%',
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Completion Rate',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: vm.weeklyCompletionRate / 100,
+                      minHeight: 6,
+                      backgroundColor: Colors.white.withValues(alpha: 0.3),
+                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Icon(
+                  Icons.show_chart_rounded,
+                  color: Colors.white.withValues(alpha: 0.8),
+                  size: 32,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _TaskSummaryCards extends StatelessWidget {
+  const _TaskSummaryCards();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Consumer<AssignmentListViewModel>(
+      builder: (context, vm, _) {
+        return Row(
+          children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.priorityHigh.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.pending_actions_rounded,
+                        color: AppColors.priorityHigh,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'PENDING',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: AppColors.priorityHigh,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            '${vm.pendingCount}',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Tasks remaining',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.check_circle_rounded,
+                        color: AppColors.success,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'DONE',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: AppColors.success,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            '${vm.completedCount}',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Completed',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class _FilterChips extends StatelessWidget {
   const _FilterChips();
 
@@ -172,6 +372,18 @@ class _FilterChips extends StatelessWidget {
                 label: 'High Priority',
                 selected: vm.filter == 'high',
                 onTap: () => vm.setFilter('high'),
+              ),
+              const SizedBox(width: 8),
+              _Chip(
+                label: 'Medium Priority',
+                selected: vm.filter == 'medium',
+                onTap: () => vm.setFilter('medium'),
+              ),
+              const SizedBox(width: 8),
+              _Chip(
+                label: 'Low Priority',
+                selected: vm.filter == 'low',
+                onTap: () => vm.setFilter('low'),
               ),
               const SizedBox(width: 8),
               _Chip(
@@ -221,23 +433,63 @@ class _AssignmentTile extends StatelessWidget {
     required this.assignment,
     required this.onToggle,
     this.onTap,
+    this.onDelete,
   });
 
   final Assignment assignment;
   final VoidCallback onToggle;
   final VoidCallback? onTap;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isHigh = assignment.priority == AssignmentPriority.high;
     final isMedium = assignment.priority == AssignmentPriority.medium;
-    return AluCard(
-      onTap: onTap,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Checkbox(
+    return Dismissible(
+      key: Key(assignment.id),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: AppColors.priorityHigh,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.delete_rounded, color: Colors.white, size: 28),
+      ),
+      confirmDismiss: (_) async {
+        return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Remove assignment?'),
+            content: Text(
+              'Remove "${assignment.title}" from your list?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.priorityHigh,
+                ),
+                child: const Text('Remove'),
+              ),
+            ],
+          ),
+        );
+      },
+      onDismissed: (_) => onDelete?.call(),
+      child: AluCard(
+        onTap: onTap,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Checkbox(
             value: assignment.isCompleted,
             onChanged: (_) => onToggle(),
             activeColor: AppColors.primary,
@@ -265,9 +517,9 @@ class _AssignmentTile extends StatelessWidget {
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: isHigh
-                            ? AppColors.error.withValues(alpha: 0.1)
+                            ? AppColors.priorityHigh.withValues(alpha: 0.2)
                             : isMedium
-                                ? AppColors.warning.withValues(alpha: 0.1)
+                                ? AppColors.priorityMedium.withValues(alpha: 0.2)
                                 : AppColors.success.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -279,9 +531,9 @@ class _AssignmentTile extends StatelessWidget {
                                 : 'Low',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: isHigh
-                              ? AppColors.error
+                              ? AppColors.priorityHigh
                               : isMedium
-                                  ? AppColors.warning
+                                  ? AppColors.priorityMedium
                                   : AppColors.success,
                           fontWeight: FontWeight.w600,
                         ),
@@ -328,6 +580,7 @@ class _AssignmentTile extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

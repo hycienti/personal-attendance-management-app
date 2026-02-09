@@ -59,7 +59,26 @@ class SqliteAssignmentStore implements AssignmentStore {
   }
 
   @override
+  Future<Assignment> updateAssignment(Assignment assignment) async {
+    await _db.updateAssignment(assignment.id, {
+      'title': assignment.title,
+      'course_name': assignment.courseName,
+      'due_date': assignment.dueDate?.toIso8601String().split('T').first,
+      'due_time': assignment.dueTime,
+      'priority': assignment.priority.name,
+      'is_completed': assignment.isCompleted ? 1 : 0,
+      'notes': assignment.notes,
+    });
+    return assignment;
+  }
+
+  @override
   Future<void> toggleComplete(String id) async {
     await _db.toggleAssignmentComplete(id);
+  }
+
+  @override
+  Future<void> deleteAssignment(String id) async {
+    await _db.deleteAssignment(id);
   }
 }

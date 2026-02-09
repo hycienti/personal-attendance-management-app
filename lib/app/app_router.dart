@@ -9,6 +9,7 @@ import '../features/attendance/presentation/pages/attendance_history_page.dart';
 import '../features/auth/presentation/state/auth_session.dart';
 import '../features/auth/presentation/pages/create_account_page.dart';
 import '../features/auth/presentation/pages/login_page.dart';
+import '../features/assignments/domain/models/assignment.dart';
 import '../features/assignments/presentation/pages/assignment_list_page.dart';
 import '../features/assignments/presentation/pages/new_assignment_page.dart';
 import '../features/assignments/presentation/view_models/assignment_list_view_model.dart';
@@ -77,6 +78,14 @@ GoRouter createAppRouter(AuthSession authSession) {
                 path: 'new',
                 parentNavigatorKey: _rootNavKey,
                 builder: (context, state) => const NewAssignmentPage(),
+              ),
+              GoRoute(
+                path: ':id/edit',
+                parentNavigatorKey: _rootNavKey,
+                builder: (context, state) {
+                  final assignment = state.extra as Assignment?;
+                  return NewAssignmentPage(editing: assignment);
+                },
               ),
             ],
           ),

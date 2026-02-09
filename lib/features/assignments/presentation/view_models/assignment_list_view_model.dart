@@ -12,12 +12,20 @@ class AssignmentListViewModel extends ChangeNotifier {
 
   UiState<List<Assignment>> _state = const UiLoading();
   String _filter = 'all';
+  int _pendingCount = 0;
+  int _completedCount = 0;
 
   UiState<List<Assignment>> get state => _state;
   String get filter => _filter;
+  int get pendingCount => _pendingCount;
+  int get completedCount => _completedCount;
 
-  int get pendingCount => _state.dataOrNull?.where((e) => !e.isCompleted).length ?? 0;
-  int get completedCount => _state.dataOrNull?.where((e) => e.isCompleted).length ?? 0;
+  /// Weekly completion rate: completed / total * 100 (0-100).
+  int get weeklyCompletionRate {
+    final total = _pendingCount + _completedCount;
+    if (total == 0) return 0;
+    return ((_completedCount / total) * 100).round();
+  }
 
   void setFilter(String value) {
     _filter = value;
@@ -28,9 +36,14 @@ class AssignmentListViewModel extends ChangeNotifier {
     _state = const UiLoading();
     notifyListeners();
     try {
-      final list = await _store.getAssignments(
-        filter: _filter == 'all' ? null : _filter,
-      );
+      final results = await Future.wait([
+        _store.getAssignments(filter: _filter == 'all' ? null : _filter),
+        _store.getAssignments(filter: null),
+      ]);
+      final list = results[0];
+      final allList = results[1];
+      _pendingCount = allList.where((e) => !e.isCompleted).length;
+      _completedCount = allList.where((e) => e.isCompleted).length;
       _state = list.isEmpty ? const UiEmpty() : UiSuccess(list);
     } catch (e) {
       _state = UiError(e.toString());
@@ -40,6 +53,11 @@ class AssignmentListViewModel extends ChangeNotifier {
 
   Future<void> toggleComplete(String id) async {
     await _store.toggleComplete(id);
+    load();
+  }
+
+  Future<void> deleteAssignment(String id) async {
+    await _store.deleteAssignment(id);
     load();
   }
 }

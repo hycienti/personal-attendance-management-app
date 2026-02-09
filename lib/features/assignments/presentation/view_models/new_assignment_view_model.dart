@@ -42,24 +42,41 @@ class NewAssignmentViewModel extends ChangeNotifier {
     String? dueTime,
     AssignmentPriority priority = AssignmentPriority.medium,
     String? notes,
+    Assignment? editing,
   }) async {
     if (!validate(title)) return false;
     _isSaving = true;
     _saveError = null;
     notifyListeners();
     try {
-      await _store.addAssignment(
-        Assignment(
-          id: '',
-          title: title.trim(),
-          courseName: courseName?.trim().isEmpty == true ? null : courseName?.trim(),
-          dueDate: dueDate,
-          dueTime: dueTime,
-          priority: priority,
-          notes: notes?.trim().isEmpty == true ? null : notes?.trim(),
-        ),
-      );
-      AppLogger.i('Assignment saved: $title');
+      if (editing != null) {
+        await _store.updateAssignment(
+          Assignment(
+            id: editing.id,
+            title: title.trim(),
+            courseName: courseName?.trim().isEmpty == true ? null : courseName?.trim(),
+            dueDate: dueDate,
+            dueTime: dueTime,
+            priority: priority,
+            isCompleted: editing.isCompleted,
+            notes: notes?.trim().isEmpty == true ? null : notes?.trim(),
+          ),
+        );
+        AppLogger.i('Assignment updated: $title');
+      } else {
+        await _store.addAssignment(
+          Assignment(
+            id: '',
+            title: title.trim(),
+            courseName: courseName?.trim().isEmpty == true ? null : courseName?.trim(),
+            dueDate: dueDate,
+            dueTime: dueTime,
+            priority: priority,
+            notes: notes?.trim().isEmpty == true ? null : notes?.trim(),
+          ),
+        );
+        AppLogger.i('Assignment saved: $title');
+      }
       return true;
     } catch (e, st) {
       AppLogger.e('Save assignment failed', e, st);

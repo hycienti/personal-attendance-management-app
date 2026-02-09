@@ -140,10 +140,22 @@ class AppDatabase {
     } else if (filter == 'high') {
       where = 'priority = ?';
       whereArgs = ['high'];
+    } else if (filter == 'medium') {
+      where = 'priority = ?';
+      whereArgs = ['medium'];
+    } else if (filter == 'low') {
+      where = 'priority = ?';
+      whereArgs = ['low'];
+    } else if (filter == 'due_soon') {
+      final now = DateTime.now();
+      final today = now.toIso8601String().split('T').first;
+      final weekFromNow = now.add(const Duration(days: 7)).toIso8601String().split('T').first;
+      where = 'is_completed = 0 AND due_date IS NOT NULL AND due_date >= ? AND due_date <= ?';
+      whereArgs = [today, weekFromNow];
     }
     return database.query(
       tableAssignments,
-      orderBy: 'created_at DESC',
+      orderBy: "COALESCE(due_date, '9999-12-31') ASC, COALESCE(due_time, '23:59') ASC",
       where: where,
       whereArgs: whereArgs,
     );
@@ -167,6 +179,19 @@ class AppDatabase {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  Future<void> updateAssignment(String id, Map<String, dynamic> row) async {
+    await _db!.update(
+      tableAssignments,
+      row,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> deleteAssignment(String id) async {
+    await _db!.delete(tableAssignments, where: 'id = ?', whereArgs: [id]);
   }
 
 
