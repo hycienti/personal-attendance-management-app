@@ -240,7 +240,8 @@ class _SchedulePageState extends State<SchedulePage> {
           );
           if (newSession != null && newSession is ScheduleSession) {
             await _store.addSession(newSession); // Save to database/store
-            _load(); // Reload sessions from database
+            _load(); // Reload sessions from database and save it
+            
           }
         },
         backgroundColor: AppColors.primary,
