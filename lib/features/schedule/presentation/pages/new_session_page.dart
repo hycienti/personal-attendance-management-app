@@ -35,18 +35,44 @@ class _NewSessionPageState extends State<NewSessionPage> {
   }
 
   Future<void> _submit() async {
-    if (_titleController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(ValidationConstants.requiredField)),
-      );
-      return;
-    }
-    setState(() => _saving = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-    setState(() => _saving = false);
-    if (!mounted) return;
-    context.pop();
+  if (_titleController.text.trim().isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text(ValidationConstants.requiredField)),
+    );
+    return;
   }
+  setState(() => _saving = true);
+  await Future.delayed(const Duration(milliseconds: 500));
+  setState(() => _saving = false);
+  if (!mounted) return;
+
+  // Create a new ScheduleSession object
+  final newSession = ScheduleSession(
+    id: DateTime.now().millisecondsSinceEpoch.toString(), // Provide a unique id
+    title: _titleController.text.trim(),
+    type: _sessionType,
+    startTime: DateTime(
+      _date.year,
+      _date.month,
+      _date.day,
+      _startTime.hour,
+      _startTime.minute,
+    ),
+    endTime: DateTime(
+      _date.year,
+      _date.month,
+      _date.day,
+      _endTime.hour,
+      _endTime.minute,
+    ),
+    location: _locationController.text.trim().isEmpty
+        ? null
+        : _locationController.text.trim(),
+    isPresent: false,
+  );
+
+  Navigator.of(context).pop(newSession);
+}
 
   @override
   Widget build(BuildContext context) {

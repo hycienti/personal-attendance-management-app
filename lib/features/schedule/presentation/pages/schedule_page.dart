@@ -8,6 +8,7 @@ import '../../../../shared/widgets/loading_view.dart';
 import '../../../../shared/widgets/responsive_container.dart';
 import '../../data/stores/schedule_store.dart';
 import '../../domain/models/schedule_session.dart';
+import 'new_session_page.dart';
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({super.key});
@@ -230,6 +231,21 @@ class _SchedulePageState extends State<SchedulePage> {
           ),
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final newSession = await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const NewSessionPage(),
+            ),
+          );
+          if (newSession != null && newSession is ScheduleSession) {
+            await _store.addSession(newSession); // Save to database/store
+            _load(); // Reload sessions from database
+          }
+        },
+        backgroundColor: AppColors.primary,
+        child: const Icon(Icons.add),
+      ),
     );
   }
 
@@ -354,3 +370,4 @@ class _SessionTile extends StatelessWidget {
     );
   }
 }
+
