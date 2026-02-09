@@ -65,40 +65,45 @@ class _LoginPageState extends State<LoginPage> {
                     key: _formKey,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         const SizedBox(height: 32),
-                        // Logo placeholder
+                        // Logo and branding
                         Center(
-                          child: Container(
-                            width: 96,
-                            height: 96,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.school_rounded,
-                              size: 48,
-                              color: AppColors.textOnPrimary,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          AppConstants.appName,
-                          style: Theme.of(context).textTheme.displaySmall,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          AppConstants.appTagline,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withValues(alpha: 0.7),
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 96,
+                                height: 96,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.school_rounded,
+                                  size: 48,
+                                  color: AppColors.textOnPrimary,
+                                ),
                               ),
-                          textAlign: TextAlign.center,
+                              const SizedBox(height: 24),
+                              Text(
+                                AppConstants.appName,
+                                style: Theme.of(context).textTheme.displaySmall,
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                AppConstants.appTagline,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.7),
+                                    ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 40),
                         AluTextField(
@@ -134,24 +139,36 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {
-                              // Forgot password
-                            },
-                            child: const Text('Forgot Password?'),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 4),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () {
+                                // Forgot password
+                              },
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                alignment: Alignment.centerRight,
+                              ),
+                              child: const Text('Forgot Password?'),
+                            ),
                           ),
                         ),
                         if (vm.submitError != null) ...[
                           const SizedBox(height: 8),
-                          Text(
-                            vm.submitError!,
-                            style: TextStyle(
-                              color: AppColors.error,
-                              fontSize: 14,
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text(
+                              vm.submitError!,
+                              style: const TextStyle(
+                                color: AppColors.error,
+                                fontSize: 14,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            textAlign: TextAlign.center,
                           ),
                         ],
                         const SizedBox(height: 24),
@@ -162,19 +179,28 @@ class _LoginPageState extends State<LoginPage> {
                           onPressed: () => _submit(vm),
                         ),
                         const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Don't have an account? ",
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                            TextButton(
-                              onPressed: () =>
-                                  context.push(RouteConstants.createAccount),
-                              child: const Text('Sign Up'),
-                            ),
-                          ],
+                        Center(
+                          child: Wrap(
+                            alignment: WrapAlignment.center,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              Text(
+                                "Don't have an account? ",
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    context.push(RouteConstants.createAccount),
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  alignment: Alignment.center,
+                                ),
+                                child: const Text('Sign Up'),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),

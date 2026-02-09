@@ -9,6 +9,10 @@ abstract final class AppColors {
   static const Color primaryDark = Color(0xFFB71C1C);
   static const Color aluRed = Color(0xFFD32F2F);
 
+  // Priority (from design)
+  static const Color priorityHigh = Color(0xFFCF3E4A);
+  static const Color priorityMedium = Color(0xFFE6AA2B);
+
   // Navy / Background
   static const Color aluNavy = Color(0xFF1A2332);
   static const Color aluNavyInput = Color(0xff121e34);

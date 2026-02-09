@@ -10,7 +10,7 @@ class CreateAccountViewModel extends ChangeNotifier {
   CreateAccountViewModel({AuthRepository? authRepository})
       : _authRepository = authRepository;
 
-  AuthRepository? _authRepository;
+  final AuthRepository? _authRepository;
   String? _fullNameError;
   String? _studentIdError;
   String? _emailError;

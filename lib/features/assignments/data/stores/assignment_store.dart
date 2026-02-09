@@ -4,7 +4,9 @@ import '../../domain/models/assignment.dart';
 abstract class AssignmentStore {
   Future<List<Assignment>> getAssignments({String? filter});
   Future<Assignment> addAssignment(Assignment assignment);
+  Future<Assignment> updateAssignment(Assignment assignment);
   Future<void> toggleComplete(String id);
+  Future<void> deleteAssignment(String id);
 }
 
 class MockAssignmentStore implements AssignmentStore {
@@ -20,7 +22,32 @@ class MockAssignmentStore implements AssignmentStore {
     if (filter == 'high') {
       return _items.where((e) => e.priority == AssignmentPriority.high).toList();
     }
-    return List.from(_items);
+    if (filter == 'medium') {
+      return _items.where((e) => e.priority == AssignmentPriority.medium).toList();
+    }
+    if (filter == 'low') {
+      return _items.where((e) => e.priority == AssignmentPriority.low).toList();
+    }
+    if (filter == 'due_soon') {
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final weekFromNow = today.add(const Duration(days: 7));
+      return _items
+          .where((e) =>
+              !e.isCompleted &&
+              e.dueDate != null &&
+              !e.dueDate!.isBefore(today) &&
+              !e.dueDate!.isAfter(weekFromNow))
+          .toList();
+    }
+    final sorted = List<Assignment>.from(_items)
+      ..sort((a, b) {
+        if (a.dueDate == null && b.dueDate == null) return 0;
+        if (a.dueDate == null) return 1;
+        if (b.dueDate == null) return -1;
+        return a.dueDate!.compareTo(b.dueDate!);
+      });
+    return sorted;
   }
 
   @override
@@ -41,6 +68,14 @@ class MockAssignmentStore implements AssignmentStore {
   }
 
   @override
+  Future<Assignment> updateAssignment(Assignment assignment) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    final i = _items.indexWhere((e) => e.id == assignment.id);
+    if (i >= 0) _items[i] = assignment;
+    return assignment;
+  }
+
+  @override
   Future<void> toggleComplete(String id) async {
     await Future.delayed(const Duration(milliseconds: 100));
     final i = _items.indexWhere((e) => e.id == id);
@@ -56,5 +91,11 @@ class MockAssignmentStore implements AssignmentStore {
         notes: _items[i].notes,
       );
     }
+  }
+
+  @override
+  Future<void> deleteAssignment(String id) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    _items.removeWhere((e) => e.id == id);
   }
 }

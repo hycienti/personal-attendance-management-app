@@ -12,19 +12,41 @@ import '../../domain/models/assignment.dart';
 import '../view_models/new_assignment_view_model.dart';
 
 class NewAssignmentPage extends StatefulWidget {
-  const NewAssignmentPage({super.key});
+  const NewAssignmentPage({super.key, this.editing});
+
+  final Assignment? editing;
 
   @override
   State<NewAssignmentPage> createState() => _NewAssignmentPageState();
 }
 
 class _NewAssignmentPageState extends State<NewAssignmentPage> {
-  final _titleController = TextEditingController();
-  final _courseController = TextEditingController();
-  final _notesController = TextEditingController();
-  AssignmentPriority _priority = AssignmentPriority.medium;
+  late final TextEditingController _titleController;
+  late final TextEditingController _courseController;
+  late final TextEditingController _notesController;
+  late AssignmentPriority _priority;
   DateTime? _dueDate;
   TimeOfDay? _dueTime;
+
+  @override
+  void initState() {
+    super.initState();
+    final e = widget.editing;
+    _titleController = TextEditingController(text: e?.title ?? '');
+    _courseController = TextEditingController(text: e?.courseName ?? '');
+    _notesController = TextEditingController(text: e?.notes ?? '');
+    _priority = e?.priority ?? AssignmentPriority.medium;
+    _dueDate = e?.dueDate;
+    if (e?.dueTime != null) {
+      final parts = e!.dueTime!.split(':');
+      if (parts.length >= 2) {
+        _dueTime = TimeOfDay(
+          hour: int.tryParse(parts[0]) ?? 0,
+          minute: int.tryParse(parts[1]) ?? 0,
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -44,6 +66,7 @@ class _NewAssignmentPageState extends State<NewAssignmentPage> {
           : null,
       priority: _priority,
       notes: _notesController.text.isEmpty ? null : _notesController.text,
+      editing: widget.editing,
     );
     if (!mounted) return;
     if (success) context.pop();
@@ -56,27 +79,39 @@ class _NewAssignmentPageState extends State<NewAssignmentPage> {
       create: (_) => NewAssignmentViewModel(
         store: context.read<AssignmentStore>(),
       ),
-      child: Scaffold(
-        appBar: AppBar(
-          leading: TextButton(
-            onPressed: () => context.pop(),
-            child: const Text('Cancel'),
-          ),
-          title: const Text('New Assignment'),
-          centerTitle: true,
-          actions: [
-            TextButton(
-              onPressed: () async {
-                final vm = context.read<NewAssignmentViewModel>();
-                if (vm.validate(_titleController.text)) {
-                  await _save(vm);
-                }
-              },
-              child: const Text('Save'),
+      child: Builder(
+        builder: (ctx) {
+          return Scaffold(
+            appBar: AppBar(
+              leadingWidth: 80,
+              leading: Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    alignment: Alignment.center,
+                  ),
+                  onPressed: () => context.pop(),
+                  child: const Text('Cancel'),
+                ),
+              ),
+              title: Text(widget.editing != null ? 'Edit Assignment' : 'New Assignment'),
+              centerTitle: true,
+              actions: [
+                TextButton(
+                  onPressed: () async {
+                    final vm = ctx.read<NewAssignmentViewModel>();
+                    if (vm.validate(_titleController.text)) {
+                      await _save(vm);
+                    }
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
             ),
-          ],
-        ),
-        body: SafeArea(
+            body: SafeArea(
           child: ResponsiveContainer(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(AppConstants.screenPadding),
@@ -112,7 +147,7 @@ class _NewAssignmentPageState extends State<NewAssignmentPage> {
                               priority: AssignmentPriority.high,
                               label: 'High',
                               icon: Icons.flag_rounded,
-                              color: AppColors.error,
+                              color: AppColors.priorityHigh,
                               selected: _priority == AssignmentPriority.high,
                               onTap: () =>
                                   setState(() => _priority = AssignmentPriority.high),
@@ -124,7 +159,7 @@ class _NewAssignmentPageState extends State<NewAssignmentPage> {
                               priority: AssignmentPriority.medium,
                               label: 'Medium',
                               icon: Icons.flag_rounded,
-                              color: AppColors.warning,
+                              color: AppColors.priorityMedium,
                               selected: _priority == AssignmentPriority.medium,
                               onTap: () => setState(
                                   () => _priority = AssignmentPriority.medium),
@@ -206,7 +241,7 @@ class _NewAssignmentPageState extends State<NewAssignmentPage> {
                       ],
                       const SizedBox(height: 24),
                       AluButton(
-                        label: 'Create Assignment',
+                        label: widget.editing != null ? 'Save Changes' : 'Create Assignment',
                         icon: Icons.add_task_rounded,
                         loading: vm.isSaving,
                         onPressed: () => _save(vm),
@@ -218,6 +253,8 @@ class _NewAssignmentPageState extends State<NewAssignmentPage> {
             ),
           ),
         ),
+      );
+        },
       ),
     );
   }

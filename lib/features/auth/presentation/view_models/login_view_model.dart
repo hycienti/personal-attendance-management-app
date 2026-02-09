@@ -10,7 +10,7 @@ class LoginViewModel extends ChangeNotifier {
   LoginViewModel({AuthRepository? authRepository})
       : _authRepository = authRepository;
 
-  AuthRepository? _authRepository;
+  final AuthRepository? _authRepository;
   String? _emailError;
   String? _passwordError;
   bool _obscurePassword = true;
