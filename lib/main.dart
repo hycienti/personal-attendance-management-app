@@ -13,7 +13,7 @@ import 'features/attendance/data/stores/attendance_store.dart';
 import 'features/attendance/data/stores/sqlite_attendance_store.dart';
 import 'features/auth/presentation/state/auth_session.dart';
 import 'features/dashboard/data/stores/dashboard_store.dart';
-import 'features/dashboard/data/stores/sqlite_dashboard_store.dart';
+import 'features/dashboard/data/stores/dashboard_store_impl.dart';
 import 'features/schedule/data/stores/schedule_store.dart';
 import 'features/schedule/data/stores/sqlite_schedule_store.dart';
 
@@ -70,9 +70,15 @@ class AluApp extends StatelessWidget {
               : MockScheduleStore(),
         ),
         Provider<DashboardStore>(
-          create: (_) => AppDatabase.instance != null
-              ? SqliteDashboardStore() as DashboardStore
-              : MockDashboardStore(),
+          create: (c) {
+            final DashboardStore store = AppDatabase.instance != null
+                ? DashboardStoreImpl(
+                    scheduleStore: c.read<ScheduleStore>(),
+                    assignmentStore: c.read<AssignmentStore>(),
+                  )
+                : MockDashboardStore();
+            return store;
+          },
         ),
       ],
       child: MaterialApp.router(

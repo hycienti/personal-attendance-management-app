@@ -15,6 +15,45 @@ import '../../../../shared/widgets/responsive_container.dart';
 import '../../domain/models/dashboard_models.dart';
 import '../view_models/dashboard_view_model.dart';
 
+/// Picks an icon for the assignment card based on keywords in title and course.
+IconData _iconForAssignment(String title, String courseOrModule) {
+  final text = '${title.toLowerCase()} ${courseOrModule.toLowerCase()}';
+  if (text.contains('essay') || text.contains('paper') || text.contains('write') || text.contains('thesis')) {
+    return Icons.description_rounded;
+  }
+  if (text.contains('read') || text.contains('book') || text.contains('chapter') || text.contains('literature')) {
+    return Icons.menu_book_rounded;
+  }
+  if (text.contains('math') || text.contains('calculus') || text.contains('algebra') || text.contains('equation')) {
+    return Icons.calculate_rounded;
+  }
+  if (text.contains('code') || text.contains('program') || text.contains('coding') || text.contains('software')) {
+    return Icons.code_rounded;
+  }
+  if (text.contains('presentation') || text.contains('slide') || text.contains('present')) {
+    return Icons.slideshow_rounded;
+  }
+  if (text.contains('quiz') || text.contains('test') || text.contains('exam')) {
+    return Icons.quiz_rounded;
+  }
+  if (text.contains('lab') || text.contains('experiment') || text.contains('science')) {
+    return Icons.science_rounded;
+  }
+  if (text.contains('project') || text.contains('portfolio')) {
+    return Icons.folder_special_rounded;
+  }
+  if (text.contains('report') || text.contains('analysis')) {
+    return Icons.analytics_rounded;
+  }
+  return Icons.edit_note_rounded;
+}
+
+/// Stable "random" image URL for a session card (same session = same image).
+String _sessionCardImageUrl(String sessionId, {int width = 280, int height = 100}) {
+  final seed = sessionId.hashCode.abs();
+  return 'https://picsum.photos/seed/$seed/$width/$height';
+}
+
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -473,75 +512,146 @@ class _SessionCard extends StatelessWidget {
 
   final TodaySession session;
 
+  static const double _imageHeight = 84;
+  static const double _cardRadius = 12;
+  static const double _cardHeight = 200;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return SizedBox(
       width: 280,
+      height: _cardHeight,
       child: AluCard(
+        padding: EdgeInsets.zero,
+        borderRadius: _cardRadius,
         borderSide: BorderSide(
           color: session.isNow ? AppColors.primary : theme.dividerColor,
           width: session.isNow ? 4 : 1,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: MainAxisSize.max,
           children: [
-            if (session.isNow)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  'NOW',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: AppColors.textOnPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(_cardRadius)),
+              child: SizedBox(
+                height: _imageHeight,
+                width: double.infinity,
+                child: Image.network(
+                  _sessionCardImageUrl(session.id),
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      height: _imageHeight,
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  (loadingProgress.expectedTotalBytes ?? 1)
+                              : null,
+                        ),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      height: _imageHeight,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppColors.primary.withValues(alpha: 0.3),
+                            AppColors.primary.withValues(alpha: 0.1),
+                          ],
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.event_rounded,
+                        size: 40,
+                        color: AppColors.primary.withValues(alpha: 0.6),
+                      ),
+                    );
+                  },
                 ),
               ),
-            const SizedBox(height: 8),
-            Text(
-              session.title,
-              style: theme.textTheme.titleMedium,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.schedule_rounded,
-                  size: 16,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppConstants.screenPadding,
+                  vertical: 10,
                 ),
-                const SizedBox(width: 4),
-                Text(
-                  session.timeRange,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Icon(
-                  Icons.location_on_rounded,
-                  size: 16,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    session.location,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (session.isNow)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'NOW',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: AppColors.textOnPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
+                  if (session.isNow) const SizedBox(height: 8),
+                  Text(
+                    session.title,
+                    style: theme.textTheme.titleMedium,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.schedule_rounded,
+                        size: 16,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          session.timeRange,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(
+                        Icons.location_on_rounded,
+                        size: 16,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          session.location,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 ),
-              ],
+              ),
             ),
           ],
         ),
@@ -780,6 +890,7 @@ class _AssignmentTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isHigh = assignment.priority == 'high';
+    final icon = _iconForAssignment(assignment.title, assignment.courseOrModule);
     return AluCard(
       onTap: () {},
       child: Row(
@@ -794,7 +905,7 @@ class _AssignmentTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              isHigh ? Icons.warning_rounded : Icons.edit_note_rounded,
+              icon,
               color: isHigh ? AppColors.error : AppColors.primary,
               size: 24,
             ),
