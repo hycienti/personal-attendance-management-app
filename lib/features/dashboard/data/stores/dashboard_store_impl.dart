@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../assignments/data/stores/assignment_store.dart';
 import '../../../assignments/domain/models/assignment.dart';
+import '../../../attendance/data/stores/attendance_store.dart';
 import '../../../schedule/data/stores/schedule_store.dart';
 import '../../../schedule/domain/models/schedule_session.dart';
 import '../../domain/models/dashboard_models.dart';
@@ -13,11 +14,14 @@ class DashboardStoreImpl implements DashboardStore {
   DashboardStoreImpl({
     required ScheduleStore scheduleStore,
     required AssignmentStore assignmentStore,
+    required AttendanceStore attendanceStore,
   })  : _scheduleStore = scheduleStore,
-        _assignmentStore = assignmentStore;
+        _assignmentStore = assignmentStore,
+        _attendanceStore = attendanceStore;
 
   final ScheduleStore _scheduleStore;
   final AssignmentStore _assignmentStore;
+  final AttendanceStore _attendanceStore;
 
   static const int _maxUpcomingAssignments = 10;
 
@@ -59,31 +63,66 @@ class DashboardStoreImpl implements DashboardStore {
       upcomingDueLabel = nextDue.title;
     }
 
-    double attendancePercent = 0;
+    // Overall attendance stats
+    double overallPercent = 0;
+    int totalAttended = 0;
+    int totalHeld = 0;
+    double weeklyPercent = 0;
+    try {
+      final results = await Future.wait([
+        _attendanceStore.getOverallPercent(),
+        _attendanceStore.getTotalAttended(),
+        _attendanceStore.getTotalHeld(),
+      ]);
+      overallPercent = results[0] as double;
+      totalAttended = results[1] as int;
+      totalHeld = results[2] as int;
+    } catch (e, st) {
+      AppLogger.w('DashboardStoreImpl.getStats overall attendance', e, st);
+    }
+
+    // Weekly attendance
     try {
       final weekStartNormalized = DateTime(now.year, now.month, now.day);
       final weekday = now.weekday;
       final start = weekStartNormalized.subtract(Duration(days: weekday - 1));
-      attendancePercent =
-          await _scheduleStore.getAttendancePercentForWeek(start);
+      weeklyPercent = await _scheduleStore.getAttendancePercentForWeek(start);
     } catch (e, st) {
-      AppLogger.w('DashboardStoreImpl.getStats attendance', e, st);
+      AppLogger.w('DashboardStoreImpl.getStats weekly attendance', e, st);
     }
 
-    const threshold = 75.0;
-    final attendanceStatus = attendancePercent >= threshold
-        ? 'Good Standing'
-        : 'Below threshold';
-    final attendanceMessage = attendancePercent >= threshold
-        ? 'You are above the ${threshold.toInt()}% threshold. Keep it up!'
-        : 'Aim for ${threshold.toInt()}% attendance this week.';
+    // Determine status and message based on overall attendance
+    String attendanceStatus;
+    String attendanceMessage;
+    if (totalHeld == 0) {
+      attendanceStatus = 'Good Standing';
+      attendanceMessage = 'No sessions recorded yet. Add sessions to track attendance.';
+    } else if (overallPercent >= 90) {
+      attendanceStatus = 'Excellent';
+      attendanceMessage = 'Outstanding! Keep maintaining your excellent attendance.';
+    } else if (overallPercent >= 75) {
+      attendanceStatus = 'Good Standing';
+      attendanceMessage = 'You are above the 75% threshold. Keep it up!';
+    } else if (overallPercent >= 60) {
+      attendanceStatus = 'Needs Improvement';
+      attendanceMessage = 'Your attendance is below 75%. Try to attend more sessions.';
+    } else if (overallPercent >= 40) {
+      attendanceStatus = 'At Risk';
+      attendanceMessage = 'Attendance is critically low. Attend upcoming sessions to recover.';
+    } else {
+      attendanceStatus = 'Critical';
+      attendanceMessage = 'Immediate action needed. Your attendance is dangerously low.';
+    }
 
     return DashboardStats(
       pendingTasksCount: pendingCount,
       upcomingDueLabel: upcomingDueLabel,
-      attendancePercent: attendancePercent,
+      attendancePercent: overallPercent,
       attendanceStatus: attendanceStatus,
       attendanceMessage: attendanceMessage,
+      totalAttended: totalAttended,
+      totalHeld: totalHeld,
+      weeklyAttendancePercent: weeklyPercent,
     );
   }
 

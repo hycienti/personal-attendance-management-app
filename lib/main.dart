@@ -75,6 +75,7 @@ class AluApp extends StatelessWidget {
                 ? DashboardStoreImpl(
                     scheduleStore: c.read<ScheduleStore>(),
                     assignmentStore: c.read<AssignmentStore>(),
+                    attendanceStore: c.read<AttendanceStore>(),
                   )
                 : MockDashboardStore();
             return store;
