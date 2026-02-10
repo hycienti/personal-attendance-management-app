@@ -14,7 +14,7 @@ class AppDatabase {
   static Database? _db;
 
   static const String _dbName = 'attendance_app.db';
-  static const int _version = 3;
+  static const int _version = 4;
 
   // Tables
   static const String tableUsers = 'users';
@@ -79,7 +79,10 @@ class AppDatabase {
       await _createSessionTable(db);
       AppLogger.d('SQLite: session table added in migration');
     }
-    await _createScheduleSessionsTable(db);
+    if (oldVersion < 4) {
+      await _createScheduleSessionsTable(db);
+      AppLogger.d('SQLite: schedule_sessions table added in migration');
+    }
   }
 
   static Future<void> _createSessionTable(Database db) async {
@@ -302,7 +305,6 @@ class AppDatabase {
   }
 
   Future<void> setSessionUserId(String? userId) async {
-    // Use INSERT OR REPLACE so the session row always exists and is updated
     await _db!.rawInsert(
       'INSERT OR REPLACE INTO $tableSession (id, user_id) VALUES (1, ?)',
       [userId],
@@ -322,6 +324,39 @@ class AppDatabase {
       tableScheduleSessions,
       where: 'start_time >= ? AND start_time < ?',
       whereArgs: [start.toIso8601String(), end.toIso8601String()],
+      orderBy: 'start_time ASC',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getAllScheduleSessions() async {
+    return _db!.query(
+      tableScheduleSessions,
+      orderBy: 'start_time ASC',
+    );
+  }
+
+  Future<void> updateScheduleSession(String id, Map<String, dynamic> row) async {
+    await _db!.update(
+      tableScheduleSessions,
+      row,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> deleteScheduleSession(String id) async {
+    await _db!.delete(tableScheduleSessions, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> toggleScheduleSessionAttendance(String id) async {
+    final rows = await _db!.query(tableScheduleSessions, where: 'id = ?', whereArgs: [id]);
+    if (rows.isEmpty) return;
+    final current = (rows.first['is_present'] as int? ?? 0);
+    await _db!.update(
+      tableScheduleSessions,
+      {'is_present': current == 1 ? 0 : 1},
+      where: 'id = ?',
+      whereArgs: [id],
     );
   }
 }
