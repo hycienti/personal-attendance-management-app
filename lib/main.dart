@@ -12,6 +12,8 @@ import 'features/assignments/data/stores/sqlite_assignment_store.dart';
 import 'features/attendance/data/stores/attendance_store.dart';
 import 'features/attendance/data/stores/sqlite_attendance_store.dart';
 import 'features/auth/presentation/state/auth_session.dart';
+import 'features/schedule/data/stores/schedule_store.dart';
+import 'features/schedule/data/stores/sqlite_schedule_store.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,13 +62,18 @@ class AluApp extends StatelessWidget {
               ? SqliteAttendanceStore() as AttendanceStore
               : MockAttendanceStore(),
         ),
+        Provider<ScheduleStore>(
+          create: (_) => AppDatabase.instance != null
+              ? SqliteScheduleStore() as ScheduleStore
+              : MockScheduleStore(),
+        ),
       ],
       child: MaterialApp.router(
         title: 'ALU Assistant',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.system,
+        themeMode: ThemeMode.dark,
         routerConfig: appRouter,
       ),
     );

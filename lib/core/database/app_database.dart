@@ -14,13 +14,14 @@ class AppDatabase {
   static Database? _db;
 
   static const String _dbName = 'attendance_app.db';
-  static const int _version = 3;
+  static const int _version = 4;
 
   // Tables
   static const String tableUsers = 'users';
   static const String tableSession = 'session';
   static const String tableAssignments = 'assignments';
   static const String tableAttendanceRecords = 'attendance_records';
+  static const String tableScheduleSessions = 'schedule_sessions';
 
 
   static Future<AppDatabase> init() async {
@@ -41,6 +42,7 @@ class AppDatabase {
   static Future<void> _onCreate(Database db, int version) async {
     await _createUsersTable(db);
     await _createSessionTable(db);
+    await _createScheduleSessionsTable(db);
     await db.execute('''
       CREATE TABLE $tableAssignments (
         id TEXT PRIMARY KEY,
@@ -77,6 +79,10 @@ class AppDatabase {
       await _createSessionTable(db);
       AppLogger.d('SQLite: session table added in migration');
     }
+    if (oldVersion < 4) {
+      await _createScheduleSessionsTable(db);
+      AppLogger.d('SQLite: schedule_sessions table added in migration');
+    }
   }
 
   static Future<void> _createSessionTable(Database db) async {
@@ -106,6 +112,20 @@ class AppDatabase {
     await db.execute(
       'CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON $tableUsers (email)',
     );
+  }
+
+  static Future<void> _createScheduleSessionsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS $tableScheduleSessions (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        type TEXT NOT NULL,
+        start_time TEXT NOT NULL,
+        end_time TEXT NOT NULL,
+        location TEXT,
+        is_present INTEGER NOT NULL
+      )
+    ''');
   }
 
   static AppDatabase? get instance => _instance;
@@ -285,10 +305,58 @@ class AppDatabase {
   }
 
   Future<void> setSessionUserId(String? userId) async {
-    // Use INSERT OR REPLACE so the session row always exists and is updated
     await _db!.rawInsert(
       'INSERT OR REPLACE INTO $tableSession (id, user_id) VALUES (1, ?)',
       [userId],
+    );
+  }
+
+  // --- Schedule Sessions ---
+
+  Future<void> insertScheduleSession(Map<String, dynamic> row) async {
+    await _db!.insert(tableScheduleSessions, row);
+  }
+
+  Future<List<Map<String, dynamic>>> getScheduleSessionsForDay(DateTime day) async {
+    final start = DateTime(day.year, day.month, day.day);
+    final end = start.add(const Duration(days: 1));
+    return _db!.query(
+      tableScheduleSessions,
+      where: 'start_time >= ? AND start_time < ?',
+      whereArgs: [start.toIso8601String(), end.toIso8601String()],
+      orderBy: 'start_time ASC',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getAllScheduleSessions() async {
+    return _db!.query(
+      tableScheduleSessions,
+      orderBy: 'start_time ASC',
+    );
+  }
+
+  Future<void> updateScheduleSession(String id, Map<String, dynamic> row) async {
+    await _db!.update(
+      tableScheduleSessions,
+      row,
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> deleteScheduleSession(String id) async {
+    await _db!.delete(tableScheduleSessions, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> toggleScheduleSessionAttendance(String id) async {
+    final rows = await _db!.query(tableScheduleSessions, where: 'id = ?', whereArgs: [id]);
+    if (rows.isEmpty) return;
+    final current = (rows.first['is_present'] as int? ?? 0);
+    await _db!.update(
+      tableScheduleSessions,
+      {'is_present': current == 1 ? 0 : 1},
+      where: 'id = ?',
+      whereArgs: [id],
     );
   }
 }
