@@ -69,7 +69,7 @@ class _NewAssignmentPageState extends State<NewAssignmentPage> {
       editing: widget.editing,
     );
     if (!mounted) return;
-    if (success) context.pop();
+    if (success) context.pop(true);
   }
 
   @override

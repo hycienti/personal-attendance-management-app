@@ -29,6 +29,23 @@ class _AssignmentListPageState extends State<AssignmentListPage> {
     });
   }
 
+  Future<void> _openNewAssignment() async {
+    final result = await context.push<bool>('${RouteConstants.assignments}/new');
+    if (result == true && mounted) {
+      context.read<AssignmentListViewModel>().load();
+    }
+  }
+
+  Future<void> _openEditAssignment(Assignment assignment) async {
+    final result = await context.push<bool>(
+      '${RouteConstants.assignments}/${assignment.id}/edit',
+      extra: assignment,
+    );
+    if (result == true && mounted) {
+      context.read<AssignmentListViewModel>().load();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,10 +94,7 @@ class _AssignmentListPageState extends State<AssignmentListPage> {
                                   assignment: list[i],
                                   onToggle: () =>
                                       vm.toggleComplete(list[i].id),
-                                  onTap: () => context.push(
-                                    '${RouteConstants.assignments}/${list[i].id}/edit',
-                                    extra: list[i],
-                                  ),
+                                  onTap: () => _openEditAssignment(list[i]),
                                   onDelete: () => vm.deleteAssignment(list[i].id),
                                 ),
                               ),
@@ -103,7 +117,7 @@ class _AssignmentListPageState extends State<AssignmentListPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('${RouteConstants.assignments}/new'),
+        onPressed: _openNewAssignment,
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add_rounded),
       ),
