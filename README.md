@@ -1,139 +1,192 @@
-Student Academic Platform
-At African Leadership University, we identify challenges and create innovative solutions. This semester, you and your team will address a common issue among ALU students: managing academic responsibilities while balancing university life.
+![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
 
-Students across all years struggle with tracking assignments, remembering class schedules, and monitoring their attendance. This often leads to missed deadlines, poor attendance, and unnecessary academic stress that affects performance across ALU's campuses.
+# ALU Assistant
 
-Your Mission: Develop a mobile application that serves as a personal academic assistant for ALU students. Your app should help users organize their coursework, track their schedule, and monitor their academic engagement throughout the term.
+> A personal attendance management app built for **African Leadership University** students to track attendance, manage assignments, view schedules, and monitor academic progress — all offline-first with SQLite.
 
-Core Application Features
-1. Home Dashboard
-The dashboard must display:
+---
 
-Today's date and current academic week
+## Features
 
-A list of today's scheduled academic sessions
+### Dashboard
+- Personalized greeting with real-time date and week number
+- At-a-glance stats: pending tasks, upcoming deadlines
+- Low attendance alert banner when below 75% (calculates sessions needed to recover)
+- Today's sessions in a horizontally scrollable card list
+- Attendance health card with circular progress, status badge, and weekly breakdown
 
-Assignments due within the next seven days
+### Attendance Tracking
+- Automatic attendance percentage calculation from recorded sessions
+- Monthly progress comparison (current month vs. last month)
+- Filter history by session type (Class, Mastery, Workshop, Study, PSL)
+- PRESENT / ABSENT badges on each session record
+- Info dialog with full attendance summary
+- Alert system when attendance drops below 75%
 
-Current overall attendance percentage
+### Assignments
+- Create, edit, and complete assignments
+- Priority levels: High, Medium, Low
+- Due date and time tracking
+- Course/module association
+- Filter and sort assignment list
 
-Visual warning indicator when attendance falls below 75%
+### Schedule
+- View and manage scheduled sessions by day
+- Session types: Class, Mastery, Workshop, Study, PSL
+- Toggle attendance directly from the schedule
+- Create new sessions with title, type, time range, and location
 
-Summary count of pending assignments
+### Authentication
+- Secure login and account creation
+- SHA-256 password hashing with salt
+- Persistent session management (auto-login on restart)
+- Test account seeded for development
 
-2. Assignment Management System
-Users will be able to:
+### Profile
+- View user information (name, email, student ID)
+- Logout functionality
 
-Create new assignments by entering:
+---
 
-Assignment title (required text field)
+## Tech Stack
 
-Due date (using date picker)
+| Layer              | Technology                          |
+|--------------------|-------------------------------------|
+| Framework          | Flutter 3.10+                       |
+| Language           | Dart                                |
+| Database           | SQLite (sqflite)                    |
+| State Management   | Provider (ChangeNotifier)           |
+| Navigation         | go_router (declarative)             |
+| Formatting         | intl                                |
+| Equality           | equatable                           |
+| Security           | crypto (SHA-256)                    |
+| Theming            | Material Design 3, Dark mode        |
 
-Course name (text input)
+---
 
-Priority level (optional: High/Medium/Low)
+## Architecture
 
-View all assignments in a list sorted by due date
+The app follows a **feature-based Clean Architecture** pattern with clear separation between data, domain, and presentation layers.
 
-Mark assignments as completed with a check action
+```
+lib/
+├── app/                        # Router, shell scaffold
+├── core/                       # Shared infrastructure
+│   ├── auth/                   #   Password hashing
+│   ├── constants/              #   App & route constants
+│   ├── database/               #   SQLite singleton (AppDatabase)
+│   ├── errors/                 #   Custom exceptions
+│   ├── logging/                #   Logger wrapper
+│   ├── theme/                  #   Colors, light/dark themes
+│   └── utils/                  #   UiState (loading/success/error/empty)
+├── features/
+│   ├── assignments/            # CRUD assignments
+│   ├── attendance/             # Attendance tracking & history
+│   ├── auth/                   # Login, registration, session
+│   ├── dashboard/              # Home screen, stats
+│   ├── profile/                # User profile
+│   └── schedule/               # Session scheduling
+├── shared/                     # Reusable widgets (AluCard, AluButton, etc.)
+└── main.dart                   # Entry point, DI setup
+```
 
-Remove assignments from the list
+**Key patterns:**
+- **Store / Repository** — abstract interfaces with SQLite + mock implementations
+- **ViewModel** — ChangeNotifier classes for presentation logic
+- **Dependency Injection** — Provider tree in `main.dart`
+- **UiState** — sealed-class-style wrapper for loading / success / empty / error states
 
-Edit assignment details if changes are needed
+---
 
-3. Academic Session Scheduling
-Users will be able to:
+## Database Schema
 
-Schedule new academic sessions by entering:
+**SQLite database:** `attendance_app.db` (version 4)
 
-Session title (required text field)
+| Table                | Purpose                                  |
+|----------------------|------------------------------------------|
+| `users`              | User accounts (email, hashed password)   |
+| `session`            | Current logged-in user (singleton row)   |
+| `assignments`        | Tasks with priority, due date, status    |
+| `schedule_sessions`  | Scheduled classes with attendance toggle  |
+| `attendance_records` | Legacy attendance history                |
 
-Date (using date picker)
+---
 
-Start time (using time picker)
+## Getting Started
 
-End time (using time picker)
+### Prerequisites
 
-Location (optional text field)
+- Flutter SDK **3.10+**
+- Dart SDK (bundled with Flutter)
+- Xcode (for iOS) or Android Studio (for Android)
 
-Session type (select from: Class, Mastery Session, Study Group, PSL Meeting)
+### Installation
 
-View weekly schedule displaying all sessions
+```bash
+# Clone the repo
+git clone https://github.com/your-username/personal-attendance-management-app.git
+cd personal-attendance-management-app
 
-Record attendance for each session using Present/Absent toggle
+# Install dependencies
+flutter pub get
 
-Remove scheduled sessions when cancelled
+# Run on a connected device or simulator
+flutter run
+```
 
-Modify session details if arrangements change
+### Test Account
 
-4. Attendance Tracking
-The application must:
+A test user is seeded automatically on first launch:
 
-Calculate attendance percentage automatically based on recorded attendance
+| Field       | Value                  |
+|-------------|------------------------|
+| Email       | `test@alustudent.com`  |
+| Password    | `test1234`             |
+| Name        | Test User              |
+| Student ID  | ALU2024001             |
 
-Display attendance metrics clearly on the dashboard
+---
 
-Provide alerts when attendance drops below 75%
+## Navigation
 
-Maintain attendance history for reference
+| Path                    | Screen              | Nav Bar |
+|-------------------------|----------------------|---------|
+| `/`                     | Dashboard            | Home    |
+| `/assignments`          | Assignment List      | Tasks   |
+| `/assignments/new`      | New Assignment       | —       |
+| `/assignments/:id/edit` | Edit Assignment      | —       |
+| `/schedule`             | Schedule             | Schedule|
+| `/schedule/new`         | New Session          | —       |
+| `/attendance/history`   | Attendance History   | History |
+| `/profile`              | Profile              | Profile |
+| `/login`                | Login                | —       |
+| `/create-account`       | Create Account       | —       |
 
-Technical Requirements
-Navigation Structure
-Implement a BottomNavigationBar with three primary tabs:
+---
 
-Dashboard - Main overview screen
+## Platforms
 
-Assignments - Assignment management interface
+| Platform | Status |
+|----------|--------|
+| iOS      | Supported |
+| Android  | Supported |
+| Web      | Supported |
+| macOS    | Supported |
+| Linux    | Supported |
+| Windows  | Supported |
 
-Schedule - Session planning and calendar view
+---
 
-Data Storage (OPTIONAL)
-Choose one implementation method:
+## Running Tests
 
-Basic Approach: Use shared_preferences to store user data
+```bash
+flutter test
+```
 
-Simplified Approach: Maintain data during current session only
+---
 
-Advanced Approach: Implement SQLite database for structured storage
+## License
 
-User Interface Standards
-Apply ALU's official color palette (The colors in the screenshot below)
-
-Ensure clear labeling of all form fields
-
-Design responsive layouts with no pixel overflow errors.
-
-Implement input validation for date/time fields
-
-Maintain consistent navigation patterns
-
-Below is a sample UI with dummy text. Please make modifications to the UI as it suits you to ensure you meet all the required functionality but maintain the colors branding.
-
-Screenshot 2026-01-21 at 14.08.30.png
-
-Academic Integrity Notice
-AI Usage Policy:
-
-All code must be your own original work
-Projects with over 50% AI-generated content will be penalized
-
-The demo video must demonstrate your genuine understanding of the code implementation
-
-You may use AI tools for learning and debugging assistance only
-
-Deliverables
-Submit a PDF document with the following:
-A write-up of what you struggled with and how you solved it.
-A link to your GitHub repo, and every member should have a branch. All team members must have visible contributions in commit history. Clear project structure and readable code.
-Demo video: The demo video will be focused on explaining the functionality of your app and demonstrating your genuine understanding of the implementation. Therefore, we expect you to understand and be able to explain the code you submitted. Please make sure to talk about every criterion on the rubric and how you implemented it and show us how it is working.
-Please ensure that you run your app either on an emulator or on a physical mobile device. Unfortunately, any app running solely in a browser looking like a website will not be graded, as it undermines the primary goal of this course: to learn how to create functional mobile applications. 
-Include a link to the group contribution tracker. Each group should make a copy of this group contribution tracker (linksto an external site) and use it to track every team member's contribution. Failure to include the contribution tracker will result in your work not being graded.
-File naming: GroupName_AssignmentName.
-
-Design and Usability 
-Professional interface following ALU branding/colors 
-
-Intuitive user experience with clear information architecture
-
-Responsive mobile design 
+This project is for personal and educational use at **African Leadership University**.
