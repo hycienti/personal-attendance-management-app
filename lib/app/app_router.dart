@@ -13,6 +13,7 @@ import '../features/assignments/domain/models/assignment.dart';
 import '../features/assignments/presentation/pages/assignment_list_page.dart';
 import '../features/assignments/presentation/pages/new_assignment_page.dart';
 import '../features/assignments/presentation/view_models/assignment_list_view_model.dart';
+import '../features/dashboard/data/stores/dashboard_store.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/dashboard/presentation/view_models/dashboard_view_model.dart';
 import '../features/schedule/presentation/pages/schedule_page.dart';
@@ -56,9 +57,11 @@ GoRouter createAppRouter(AuthSession authSession) {
         routes: [
           GoRoute(
             path: RouteConstants.dashboard,
-            pageBuilder: (_, state) => NoTransitionPage(
+            pageBuilder: (context, state) => NoTransitionPage(
               child: ChangeNotifierProvider(
-                create: (_) => DashboardViewModel()..load(),
+                create: (_) => DashboardViewModel(
+                  store: context.read<DashboardStore>(),
+                )..load(),
                 child: const DashboardPage(),
               ),
             ),
