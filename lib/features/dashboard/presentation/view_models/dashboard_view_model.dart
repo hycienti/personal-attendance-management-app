@@ -6,8 +6,7 @@ import '../../domain/models/dashboard_models.dart';
 import '../../data/stores/dashboard_store.dart';
 
 class DashboardViewModel extends ChangeNotifier {
-  DashboardViewModel({DashboardStore? store})
-      : _store = store ?? MockDashboardStore();
+  DashboardViewModel({required DashboardStore store}) : _store = store;
 
   final DashboardStore _store;
 

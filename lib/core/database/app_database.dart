@@ -4,6 +4,7 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../auth/password_hasher.dart';
 import '../logging/app_logger.dart';
 
 
@@ -68,6 +69,9 @@ class AppDatabase {
       )
     ''');
     AppLogger.d('SQLite tables created');
+    
+    // Seed test user for development
+    await _seedTestUser(db);
   }
 
   static Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -126,6 +130,30 @@ class AppDatabase {
         is_present INTEGER NOT NULL
       )
     ''');
+  }
+
+  /// Seeds a test user for development/testing
+  static Future<void> _seedTestUser(Database db) async {
+    const testEmail = 'test@alustudent.com';
+    const testPassword = 'test1234';
+    const testName = 'Test User';
+    const testStudentId = 'ALU2024001';
+
+    final salt = PasswordHasher.generateSalt();
+    final passwordHash = PasswordHasher.hash(testPassword, salt);
+    final userId = 'test-user-${DateTime.now().millisecondsSinceEpoch}';
+
+    await db.insert(tableUsers, {
+      'id': userId,
+      'email': testEmail,
+      'password_hash': passwordHash,
+      'salt': salt,
+      'full_name': testName,
+      'student_id': testStudentId,
+      'created_at': DateTime.now().toIso8601String(),
+    });
+
+    AppLogger.i('Seeded test user: $testEmail / $testPassword');
   }
 
   static AppDatabase? get instance => _instance;

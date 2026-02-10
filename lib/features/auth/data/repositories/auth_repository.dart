@@ -131,8 +131,13 @@ class AuthRepository {
     return user;
   }
 
-  /// Create account: insert user into DB and set session. Returns user or null if email exists.
-  Future<User?> createAccount({
+  /// Create account result types
+  static const String errorEmailExists = 'EMAIL_EXISTS';
+  static const String errorDbUnavailable = 'DB_UNAVAILABLE';
+
+  /// Create account: insert user into DB and set session.
+  /// Returns (User, null) on success, (null, errorCode) on failure.
+  Future<(User?, String?)> createAccount({
     required String fullName,
     required String studentId,
     required String email,
@@ -141,10 +146,10 @@ class AuthRepository {
     final dbInstance = AppDatabase.instance;
     if (dbInstance == null) {
       AppLogger.w('AuthRepository.createAccount: DB not initialized');
-      return null;
+      return (null, errorDbUnavailable);
     }
     final existing = await dbInstance.getUserByEmail(email);
-    if (existing != null) return null;
+    if (existing != null) return (null, errorEmailExists);
     final salt = PasswordHasher.generateSalt();
     final passwordHash = PasswordHasher.hash(password, salt);
     final row = await dbInstance.insertUser({
@@ -157,7 +162,7 @@ class AuthRepository {
     final user = User.fromMap(row);
     await _setStoredUserId(user.id);
     AppLogger.i('AuthRepository: account created ${user.email}');
-    return user;
+    return (user, null);
   }
 
   /// Logout: clear session only (user remains in DB).

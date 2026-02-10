@@ -8,6 +8,9 @@ class DashboardStats extends Equatable {
     this.attendancePercent = 0,
     this.attendanceStatus = 'Good Standing',
     this.attendanceMessage,
+    this.totalAttended = 0,
+    this.totalHeld = 0,
+    this.weeklyAttendancePercent = 0,
   });
 
   final int pendingTasksCount;
@@ -15,10 +18,14 @@ class DashboardStats extends Equatable {
   final double attendancePercent;
   final String attendanceStatus;
   final String? attendanceMessage;
+  final int totalAttended;
+  final int totalHeld;
+  final double weeklyAttendancePercent;
 
   @override
   List<Object?> get props =>
-      [pendingTasksCount, upcomingDueLabel, attendancePercent, attendanceStatus, attendanceMessage];
+      [pendingTasksCount, upcomingDueLabel, attendancePercent, attendanceStatus, 
+       attendanceMessage, totalAttended, totalHeld, weeklyAttendancePercent];
 }
 
 /// A session (class/mastery) for today.

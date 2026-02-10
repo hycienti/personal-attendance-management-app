@@ -4,7 +4,9 @@ abstract class AttendanceStore {
   Future<double> getOverallPercent();
   Future<int> getTotalAttended();
   Future<int> getTotalHeld();
-  Future<List<AttendanceRecord>> getRecentActivity({String? type});
+  Future<int> getTotalMissed();
+  Future<List<AttendanceRecord>> getRecentActivity({String? type, int limit = 20});
+  Future<List<AttendanceRecord>> getAllHistory({String? type, bool? isPresent});
 }
 
 class MockAttendanceStore implements AttendanceStore {
@@ -31,11 +33,30 @@ class MockAttendanceStore implements AttendanceStore {
   }
 
   @override
-  Future<List<AttendanceRecord>> getRecentActivity({String? type}) async {
+  Future<int> getTotalMissed() async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    return _items.where((e) => !e.isPresent).length;
+  }
+
+  @override
+  Future<List<AttendanceRecord>> getRecentActivity({String? type, int limit = 20}) async {
     await Future.delayed(const Duration(milliseconds: 300));
     var list = _items;
     if (type != null && type.isNotEmpty) {
       list = _items.where((e) => e.sessionType == type).toList();
+    }
+    return list.take(limit).toList();
+  }
+
+  @override
+  Future<List<AttendanceRecord>> getAllHistory({String? type, bool? isPresent}) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    var list = _items;
+    if (type != null && type.isNotEmpty) {
+      list = list.where((e) => e.sessionType == type).toList();
+    }
+    if (isPresent != null) {
+      list = list.where((e) => e.isPresent == isPresent).toList();
     }
     return list;
   }

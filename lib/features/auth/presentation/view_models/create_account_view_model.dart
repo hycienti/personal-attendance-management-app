@@ -94,14 +94,20 @@ class CreateAccountViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       final repo = _authRepository ?? await AuthRepository.create();
-      final user = await repo.createAccount(
+      final (user, errorCode) = await repo.createAccount(
         fullName: fullName,
         studentId: studentId,
         email: email,
         password: password,
       );
       if (user == null) {
-        _submitError = 'An account with this email already exists.';
+        if (errorCode == AuthRepository.errorDbUnavailable) {
+          _submitError = 'Database unavailable. Web platform is not supported for account creation.';
+        } else if (errorCode == AuthRepository.errorEmailExists) {
+          _submitError = 'An account with this email already exists.';
+        } else {
+          _submitError = 'Registration failed. Please try again.';
+        }
         return null;
       }
       AppLogger.i('Create account success: ${user.email}');

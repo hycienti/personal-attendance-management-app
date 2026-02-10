@@ -97,6 +97,19 @@ class _DashboardPageState extends State<DashboardPage> {
                     },
                   ),
                   const SizedBox(height: 24),
+                  // Low Attendance Alert Banner
+                  Consumer<DashboardViewModel>(
+                    builder: (context, vm, _) {
+                      return vm.statsState.when(
+                        loading: () => const SizedBox.shrink(),
+                        success: (stats) => stats.attendancePercent < 75 && stats.totalHeld > 0
+                            ? _LowAttendanceAlert(stats: stats)
+                            : const SizedBox.shrink(),
+                        empty: () => const SizedBox.shrink(),
+                        error: (_) => const SizedBox.shrink(),
+                      );
+                    },
+                  ),
                   // Stats cards
                   Consumer<DashboardViewModel>(
                     builder: (context, vm, _) {
@@ -228,6 +241,157 @@ class _DashboardPageState extends State<DashboardPage> {
   int _weekOfYear(DateTime d) {
     final start = DateTime(d.year, 1, 1);
     return ((d.difference(start).inDays) / 7).floor() + 1;
+  }
+}
+
+class _LowAttendanceAlert extends StatefulWidget {
+  const _LowAttendanceAlert({required this.stats});
+
+  final DashboardStats stats;
+
+  @override
+  State<_LowAttendanceAlert> createState() => _LowAttendanceAlertState();
+}
+
+class _LowAttendanceAlertState extends State<_LowAttendanceAlert> {
+  bool _dismissed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_dismissed) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    final stats = widget.stats;
+    final isCritical = stats.attendancePercent < 50;
+    final alertColor = isCritical ? AppColors.error : Colors.orange;
+    
+    // Calculate sessions needed to reach 75%
+    final sessionsNeeded = _calculateSessionsNeeded(
+      stats.totalAttended,
+      stats.totalHeld,
+      75,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: alertColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: alertColor.withValues(alpha: 0.4)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with dismiss button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 8, 0),
+              child: Row(
+                children: [
+                  Icon(
+                    isCritical ? Icons.error_rounded : Icons.warning_rounded,
+                    color: alertColor,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      isCritical 
+                          ? 'Critical: Attendance Below 50%!' 
+                          : 'Warning: Attendance Below 75%',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: alertColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close, size: 20, color: alertColor),
+                    onPressed: () => setState(() => _dismissed = true),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  ),
+                ],
+              ),
+            ),
+            // Content
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Your current attendance is ${stats.attendancePercent.toStringAsFixed(1)}%',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  if (sessionsNeeded > 0)
+                    Text(
+                      'Attend the next $sessionsNeeded session${sessionsNeeded > 1 ? 's' : ''} to reach 75%',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    )
+                  else
+                    Text(
+                      'Keep attending sessions to improve your attendance.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => context.push(RouteConstants.schedule),
+                          icon: const Icon(Icons.calendar_today_rounded, size: 16),
+                          label: const Text('View Schedule'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: alertColor,
+                            side: BorderSide(color: alertColor),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: () => context.push(RouteConstants.attendanceHistory),
+                          icon: const Icon(Icons.bar_chart_rounded, size: 16),
+                          label: const Text('View Details'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: alertColor,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Calculate how many consecutive sessions user needs to attend to reach target percentage
+  int _calculateSessionsNeeded(int attended, int total, double targetPercent) {
+    if (total == 0) return 0;
+    final currentPercent = (attended / total) * 100;
+    if (currentPercent >= targetPercent) return 0;
+    
+    // Formula: (attended + x) / (total + x) >= target/100
+    // Solving for x: x >= (target * total - 100 * attended) / (100 - target)
+    final target = targetPercent / 100;
+    final numerator = target * total - attended;
+    final denominator = 1 - target;
+    if (denominator <= 0) return 0;
+    
+    final sessionsNeeded = (numerator / denominator).ceil();
+    return sessionsNeeded > 0 ? sessionsNeeded : 0;
   }
 }
 
@@ -391,72 +555,218 @@ class _AttendanceHealthCard extends StatelessWidget {
 
   final DashboardStats stats;
 
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Excellent':
+        return AppColors.success;
+      case 'Good Standing':
+        return AppColors.primary;
+      case 'Needs Improvement':
+        return Colors.orange;
+      case 'At Risk':
+        return AppColors.error;
+      case 'Critical':
+        return AppColors.error;
+      default:
+        return AppColors.primary;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final pct = (stats.attendancePercent / 100).clamp(0.0, 1.0);
+    final statusColor = _getStatusColor(stats.attendanceStatus);
+    
     return AluCard(
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  stats.attendanceStatus,
-                  style: theme.textTheme.titleMedium,
+          // Header row with status badge
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Attendance Overview',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
-                if (stats.attendanceMessage != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    stats.attendanceMessage!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                ),
+                child: Text(
+                  stats.attendanceStatus,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: statusColor,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Main metrics row
+          Row(
+            children: [
+              // Circular progress indicator
+              SizedBox(
+                width: 100,
+                height: 100,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 100,
+                      height: 100,
+                      child: CircularProgressIndicator(
+                        value: pct,
+                        strokeWidth: 10,
+                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                        color: statusColor,
+                      ),
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '${stats.attendancePercent.toInt()}%',
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Overall',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 20),
+              // Stats breakdown
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _MetricRow(
+                      icon: Icons.check_circle_rounded,
+                      iconColor: AppColors.success,
+                      label: 'Sessions Attended',
+                      value: '${stats.totalAttended}',
+                    ),
+                    const SizedBox(height: 8),
+                    _MetricRow(
+                      icon: Icons.event_rounded,
+                      iconColor: AppColors.primary,
+                      label: 'Total Sessions',
+                      value: '${stats.totalHeld}',
+                    ),
+                    const SizedBox(height: 8),
+                    _MetricRow(
+                      icon: Icons.trending_up_rounded,
+                      iconColor: stats.weeklyAttendancePercent >= 75 
+                          ? AppColors.success 
+                          : Colors.orange,
+                      label: 'This Week',
+                      value: '${stats.weeklyAttendancePercent.toInt()}%',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Message
+          if (stats.attendanceMessage != null) ...[
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 16,
+                    color: statusColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      stats.attendanceMessage!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                      ),
                     ),
                   ),
                 ],
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () =>
-                      context.push(RouteConstants.attendanceHistory),
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero,
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('View Report'),
-                      SizedBox(width: 4),
-                      Icon(Icons.arrow_forward_rounded, size: 16),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+            const SizedBox(height: 12),
+          ],
+          // View Report button
           SizedBox(
-            width: 96,
-            height: 96,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CircularProgressIndicator(
-                  value: pct,
-                  strokeWidth: 8,
-                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                  color: AppColors.primary,
-                ),
-                Text(
-                  '${stats.attendancePercent.toInt()}%',
-                  style: theme.textTheme.titleLarge,
-                ),
-              ],
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => context.push(RouteConstants.attendanceHistory),
+              icon: const Icon(Icons.bar_chart_rounded, size: 18),
+              label: const Text('View Detailed Report'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: BorderSide(color: AppColors.primary.withValues(alpha: 0.5)),
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MetricRow extends StatelessWidget {
+  const _MetricRow({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: iconColor),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 }

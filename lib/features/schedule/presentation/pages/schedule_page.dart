@@ -59,7 +59,61 @@ class _SchedulePageState extends State<SchedulePage> {
 
   Future<void> _toggleAttendance(String id) async {
     await _store!.toggleAttendance(id);
-    _load();
+    await _load();
+    
+    // Check if attendance dropped below 75% and show alert
+    _checkAndShowLowAttendanceWarning();
+  }
+
+  void _checkAndShowLowAttendanceWarning() {
+    if (_weekAttendance < 75 && _allSessions.isNotEmpty) {
+      final isCritical = _weekAttendance < 50;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: isCritical ? AppColors.error : Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+          content: Row(
+            children: [
+              Icon(
+                isCritical ? Icons.error_rounded : Icons.warning_rounded,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isCritical 
+                          ? 'Critical: Attendance Below 50%!' 
+                          : 'Warning: Attendance Below 75%',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      'Current: ${_weekAttendance.toStringAsFixed(1)}%',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          action: SnackBarAction(
+            label: 'VIEW',
+            textColor: Colors.white,
+            onPressed: () => context.push('/attendance/history'),
+          ),
+        ),
+      );
+    }
   }
 
   Future<void> _deleteSession(String id) async {

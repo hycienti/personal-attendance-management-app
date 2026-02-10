@@ -18,6 +18,9 @@ class MockDashboardStore implements DashboardStore {
       attendancePercent: 82,
       attendanceStatus: 'Good Standing',
       attendanceMessage: 'You are above the 75% threshold. Keep it up!',
+      totalAttended: 41,
+      totalHeld: 50,
+      weeklyAttendancePercent: 85,
     );
   }
 
